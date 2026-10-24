@@ -1,0 +1,40 @@
+{
+  "$schema": "https://tree-sitter.github.io/tree-sitter/assets/schemas/config.schema.json",
+  "grammars": [
+    {
+      "name": "posix_sed",
+      "title": "POSIX sed",
+      "scope": "source.posix_sed",
+      "path": ".",
+      "file-types": ["sed"],
+      "injection-regex": "^posix_sed$",
+      "highlights": "queries/highlights.scm",
+      "external-files": ["common/scanner.h", "common/tokens.h"]
+    },
+    {
+      "name": "posix_sed_ere",
+      "title": "POSIX sed (ERE)",
+      "scope": "source.posix_sed.ere",
+      "path": "posix_sed_ere",
+      "injection-regex": "^posix_sed_ere$",
+      "highlights": "posix_sed_ere/queries/highlights.scm",
+      "external-files": ["common/scanner.h", "common/tokens.h"]
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "license": "MIT",
+    "description": "Tree-sitter grammars for POSIX sed.",
+    "links": {
+      "repository": "https://github.com/konomanoasa/tree-sitter-posix-sed"
+    }
+  },
+  "bindings": {
+    "c": false,
+    "go": false,
+    "node": false,
+    "python": false,
+    "rust": true,
+    "swift": false
+  }
+}

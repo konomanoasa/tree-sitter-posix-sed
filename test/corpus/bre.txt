@@ -1,0 +1,2229 @@
+==================
+mirrors the POSIX BRE production hierarchy
+:language(posix_sed)
+:cst
+==================
+s#^\(ab*\)\{2,3\}$#x#
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:21       editing_command
+0:0  - 0:21         function: function
+0:0  - 0:21           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `#`
+0:2  - 0:18             expression: basic_reg_exp
+0:2  - 0:18               bre_branch
+0:2  - 0:18                 bre_expression
+0:2  - 0:3                    "^"
+0:3  - 0:17                   simple_bre
+0:3  - 0:10                     nondupl_bre
+0:3  - 0:5                        "\\("
+0:5  - 0:8                        expression: basic_reg_exp
+0:5  - 0:8                          bre_branch
+0:5  - 0:6                            bre_expression
+0:5  - 0:6                              simple_bre
+0:5  - 0:6                                nondupl_bre
+0:5  - 0:6                                  one_char_or_coll_elem_bre
+0:5  - 0:6                                    ordinary_character `a`
+0:6  - 0:8                            bre_expression
+0:6  - 0:8                              simple_bre
+0:6  - 0:7                                nondupl_bre
+0:6  - 0:7                                  one_char_or_coll_elem_bre
+0:6  - 0:7                                    ordinary_character `b`
+0:7  - 0:8                                bre_dupl_symbol
+0:7  - 0:8                                  "*"
+0:8  - 0:10                       "\\)"
+0:10 - 0:17                     bre_dupl_symbol
+0:10 - 0:12                       "\\{"
+0:12 - 0:13                       minimum: duplication_count `2`
+0:13 - 0:14                       ","
+0:14 - 0:15                       maximum: duplication_count `3`
+0:15 - 0:17                       "\\}"
+0:17 - 0:18                   "$"
+0:18 - 0:19             middle: delimiter `#`
+0:19 - 0:20             replacement: replacement
+0:19 - 0:20               replacement_literal `x`
+0:20 - 0:21             closing: delimiter `#`
+0:21 - 1:0        command_separator
+0:21 - 0:22         `\n`
+
+==================
+recognizes an escaped BRE delimiter in a substitution
+:language(posix_sed)
+==================
+s|\||x|
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (escaped_delimiter)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+recognizes an escaped BRE delimiter in a context address
+:language(posix_sed)
+==================
+\|\||p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (address_escape)
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (escaped_delimiter)))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+keeps a dollar sign literal before an escaped BRE delimiter
+:language(posix_sed)
+==================
+s|$\||x|
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))))
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (escaped_delimiter)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+preserves a special BRE delimiter escape without selecting its interpretation
+:language(posix_sed)
+==================
+s.\..x.
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (syntax_issue
+                        (unspecified_syntax
+                          (special_delimiter_escape
+                            (escaped_delimiter))))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+exposes non-ASCII BRE characters atomically
+:language(posix_sed)
+==================
+/😺犬/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+exposes non-ASCII BRE delimiters atomically
+:language(posix_sed)
+==================
+s😺猫😺犬😺g
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter)
+          (substitution_flags
+            (global_flag)))))
+    (command_separator)))
+
+==================
+keeps a dollar sign literal before an escaped closing-parenthesis delimiter
+:language(posix_sed)
+==================
+s)\(a$\))x)
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (basic_reg_exp
+                      (bre_branch
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (ordinary_character)))))
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (ordinary_character)))))
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (escaped_delimiter)))))))
+                    (syntax_issue
+                      (undefined_syntax
+                        (unclosed_subexpression))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+rejects optional BRE anchors while preserving implementation-defined escapes
+:language(posix_sed)
+==================
+/\(^a$\)\+b\?c\|d/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (basic_reg_exp
+                        (bre_branch
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_left_anchor)))))))
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (ordinary_character)))))
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_right_anchor))))))))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (syntax_issue
+                          (implementation_defined_syntax
+                            (bre_plus_escape)))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (syntax_issue
+                          (implementation_defined_syntax
+                            (bre_question_mark_escape)))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (syntax_issue
+                          (implementation_defined_syntax
+                            (bre_vertical_line_escape)))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+accepts empty BRE groups without an expression or issue
+:language(posix_sed)
+==================
+/\(\)/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre)))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+ends a leading empty BRE interval before a following expression
+:language(posix_sed)
+==================
+/\{\}a\{1\}/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (syntax_issue
+                      (undefined_syntax
+                        (leading_duplication_symbol
+                          (bre_dupl_symbol
+                            (syntax_issue
+                              (undefined_syntax
+                                (missing_interval_minimum)))))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+ends an empty BRE interval after a duplication operator
+:language(posix_sed)
+==================
+s/x*\{\}y\{2\}/z/
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol)
+                  (syntax_issue
+                    (undefined_syntax
+                      (adjacent_duplication_symbol
+                        (bre_dupl_symbol
+                          (syntax_issue
+                            (undefined_syntax
+                              (missing_interval_minimum)))))))))
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (duplication_count))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+preserves BRE interval recovery structure
+:language(posix_sed)
+==================
+/\{3\}a*\{2\}\}/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (syntax_issue
+                      (undefined_syntax
+                        (leading_duplication_symbol
+                          (bre_dupl_symbol
+                            (duplication_count)))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol)
+                    (syntax_issue
+                      (undefined_syntax
+                        (adjacent_duplication_symbol
+                          (bre_dupl_symbol
+                            (duplication_count)))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (syntax_issue
+                        (undefined_syntax
+                          (unmatched_interval_close))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+classifies malformed BRE interval recovery inside the POSIX hierarchy
+:language(posix_sed)
+==================
+/\(\)a\{1,2,3\}\)/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre)))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count)
+                      (duplication_count)
+                      (syntax_issue
+                        (undefined_syntax
+                          (unexpected_interval_separator)))
+                      (duplication_count))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (syntax_issue
+                        (undefined_syntax
+                          (unmatched_subexpression_close))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+keeps a newline escape inside a malformed BRE interval
+:language(posix_sed)
+==================
+/a\{2,3\n}/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count)
+                      (duplication_count)
+                      (syntax_issue
+                        (undefined_syntax
+                          (invalid_interval_character)))
+                      (syntax_issue
+                        (undefined_syntax
+                          (invalid_interval_character)))
+                      (syntax_issue
+                        (undefined_syntax
+                          (missing_interval_close))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+keeps a delimiter escape inside a malformed BRE interval
+:language(posix_sed)
+==================
+s/b\{1\//x/
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (duplication_count)
+                    (syntax_issue
+                      (undefined_syntax
+                        (invalid_interval_character)))
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_close))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+keeps nonconforming BRE subexpression anchors structured for duplication recovery
+:language(posix_sed)
+==================
+/\(^*\)\(^\{1\}\)/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (basic_reg_exp
+                        (bre_branch
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_left_anchor)))))))
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (ordinary_character))))))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (basic_reg_exp
+                        (bre_branch
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_left_anchor)))))))
+                          (bre_expression
+                            (simple_bre
+                              (syntax_issue
+                                (undefined_syntax
+                                  (leading_duplication_symbol
+                                    (bre_dupl_symbol
+                                      (duplication_count))))))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+A bracket expression after a malformed interval remains outside it (BRE)
+:language(posix_sed)
+:cst
+==================
+/a\{1[bc]\}/p
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:13       editing_command
+0:0  - 0:12         addresses: address_clause
+0:0  - 0:12           first: address
+0:0  - 0:12             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:11               expression: basic_reg_exp
+0:1  - 0:11                 bre_branch
+0:1  - 0:5                    bre_expression
+0:1  - 0:5                      simple_bre
+0:1  - 0:2                        nondupl_bre
+0:1  - 0:2                          one_char_or_coll_elem_bre
+0:1  - 0:2                            ordinary_character `a`
+0:2  - 0:5                        bre_dupl_symbol
+0:2  - 0:4                          "\\{"
+0:4  - 0:5                          minimum: duplication_count `1`
+0:5  - 0:5                          issue: syntax_issue
+0:5  - 0:5                            undefined_syntax
+0:5  - 0:5                              missing_interval_close
+0:5  - 0:9                    bre_expression
+0:5  - 0:9                      simple_bre
+0:5  - 0:9                        nondupl_bre
+0:5  - 0:9                          one_char_or_coll_elem_bre
+0:5  - 0:9                            bracket_expression
+0:5  - 0:6                              "["
+0:6  - 0:8                              matching_list
+0:6  - 0:8                                bracket_list
+0:6  - 0:8                                  follow_list
+0:6  - 0:7                                    expression_term
+0:6  - 0:7                                      single_expression
+0:6  - 0:7                                        end_range
+0:6  - 0:7                                          collating_element_single `b`
+0:7  - 0:8                                    expression_term
+0:7  - 0:8                                      single_expression
+0:7  - 0:8                                        end_range
+0:7  - 0:8                                          collating_element_single `c`
+0:8  - 0:9                              "]"
+0:9  - 0:11                   bre_expression
+0:9  - 0:11                     simple_bre
+0:9  - 0:11                       nondupl_bre
+0:9  - 0:11                         issue: syntax_issue
+0:9  - 0:11                           undefined_syntax
+0:9  - 0:11                             unmatched_interval_close `\\}`
+0:11 - 0:12               closing: delimiter `/`
+0:12 - 0:13         function: function
+0:12 - 0:13           print_function
+0:12 - 0:13             verb: function_verb `p`
+0:13 - 1:0        command_separator
+0:13 - 0:14         `\n`
+
+==================
+A group closer after a malformed interval remains outside it (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(a\{2\)/p
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:11       editing_command
+0:0  - 0:10         addresses: address_clause
+0:0  - 0:10           first: address
+0:0  - 0:10             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:9                expression: basic_reg_exp
+0:1  - 0:9                  bre_branch
+0:1  - 0:9                    bre_expression
+0:1  - 0:9                      simple_bre
+0:1  - 0:9                        nondupl_bre
+0:1  - 0:3                          "\\("
+0:3  - 0:7                          expression: basic_reg_exp
+0:3  - 0:7                            bre_branch
+0:3  - 0:7                              bre_expression
+0:3  - 0:7                                simple_bre
+0:3  - 0:4                                  nondupl_bre
+0:3  - 0:4                                    one_char_or_coll_elem_bre
+0:3  - 0:4                                      ordinary_character `a`
+0:4  - 0:7                                  bre_dupl_symbol
+0:4  - 0:6                                    "\\{"
+0:6  - 0:7                                    minimum: duplication_count `2`
+0:7  - 0:7                                    issue: syntax_issue
+0:7  - 0:7                                      undefined_syntax
+0:7  - 0:7                                        missing_interval_close
+0:7  - 0:9                          "\\)"
+0:9  - 0:10               closing: delimiter `/`
+0:10 - 0:11         function: function
+0:10 - 0:11           print_function
+0:10 - 0:11             verb: function_verb `p`
+0:11 - 1:0        command_separator
+0:11 - 0:12         `\n`
+
+==================
+leaves an ordinary character outside a malformed BRE interval
+:language(posix_sed)
+==================
+/a\{1x\}/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count)
+                      (syntax_issue
+                        (undefined_syntax
+                          (invalid_interval_character))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+keeps the delimiter inside a bracket expression after a malformed BRE interval
+:language(posix_sed)
+==================
+s.a\{1[.]b.x.
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (duplication_count)
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_close))))))
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (bracket_expression
+                        (matching_list
+                          (bracket_list
+                            (follow_list
+                              (expression_term
+                                (single_expression
+                                  (end_range
+                                    (collating_element_single))))))))))))
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+rejects a BRE interval escape before its mandatory minimum at EOF
+:language(posix_sed)
+==================
+s/a\{\
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_minimum)))
+                    (syntax_issue
+                      (incomplete_syntax
+                        (invalid_interval_close))))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
+==================
+rejects an unclosed BRE group whose delimiter prevents completion at EOF
+:language(posix_sed)
+==================
+s)\(a
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (basic_reg_exp
+                      (bre_branch
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (ordinary_character)))))))
+                    (syntax_issue
+                      (undefined_syntax
+                        (unclosed_subexpression))))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
+==================
+recognizes escaped interval comma and count in BRE
+:language(posix_sed)
+==================
+s,a\{1\,2\},b,
+s1a\{\12\}1b1
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (duplication_count)
+                    (escaped_delimiter)
+                    (duplication_count))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (escaped_delimiter)
+                    (duplication_count))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+owns a NUL inside a malformed BRE interval
+:language(posix_sed)
+==================
+s/a\{x y\}/z/
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (syntax_issue
+                      (undefined_syntax
+                        (invalid_interval_character)))
+                    (syntax_issue
+                      (invalid_syntax
+                        (invalid_regular_expression_character)))
+                    (syntax_issue
+                      (undefined_syntax
+                        (invalid_interval_character))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+owns a NUL inside an escaped BRE atom
+:language(posix_sed)
+==================
+s/\ /z/
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (syntax_issue
+                        (invalid_syntax
+                          (invalid_regular_expression_character)))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+An unfinished empty group has no invented body (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(
+------------------
+
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:3           first: address
+0:0 - 0:3             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         "\\("
+0:3 - 0:3                         issue: syntax_issue
+0:3 - 0:3                           incomplete_syntax
+0:3 - 0:3                             unclosed_subexpression
+0:3 - 0:3               issue: syntax_issue
+0:3 - 0:3                 incomplete_syntax
+0:3 - 0:3                   unterminated_regular_expression
+0:3 - 0:3         issue: syntax_issue
+0:3 - 0:3           incomplete_syntax
+0:3 - 0:3             missing_function
+
+==================
+A final backslash retains its incomplete regular expression escape (BRE)
+:language(posix_sed)
+:cst
+==================
+/a\
+------------------
+
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:3           first: address
+0:0 - 0:3             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:2                   bre_expression
+0:1 - 0:2                     simple_bre
+0:1 - 0:2                       nondupl_bre
+0:1 - 0:2                         one_char_or_coll_elem_bre
+0:1 - 0:2                           ordinary_character `a`
+0:2 - 0:3                   bre_expression
+0:2 - 0:3                     simple_bre
+0:2 - 0:3                       nondupl_bre
+0:2 - 0:3                         one_char_or_coll_elem_bre
+0:2 - 0:3                           issue: syntax_issue
+0:2 - 0:3                             incomplete_syntax
+0:2 - 0:3                               incomplete_regular_expression_escape `\\`
+0:3 - 0:3               issue: syntax_issue
+0:3 - 0:3                 incomplete_syntax
+0:3 - 0:3                   unterminated_regular_expression
+0:3 - 0:3         issue: syntax_issue
+0:3 - 0:3           incomplete_syntax
+0:3 - 0:3             missing_function
+
+==================
+A quoted character is a direct source leaf (BRE)
+:language(posix_sed)
+:cst
+==================
+/a\./p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:5           first: address
+0:0 - 0:5             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: basic_reg_exp
+0:1 - 0:4                 bre_branch
+0:1 - 0:2                   bre_expression
+0:1 - 0:2                     simple_bre
+0:1 - 0:2                       nondupl_bre
+0:1 - 0:2                         one_char_or_coll_elem_bre
+0:1 - 0:2                           ordinary_character `a`
+0:2 - 0:4                   bre_expression
+0:2 - 0:4                     simple_bre
+0:2 - 0:4                       nondupl_bre
+0:2 - 0:4                         one_char_or_coll_elem_bre
+0:2 - 0:4                           quoted_character `\\.`
+0:4 - 0:5               closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
+==================
+A nonempty group owns its expression and delimiters (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(a\)/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:7         addresses: address_clause
+0:0 - 0:7           first: address
+0:0 - 0:7             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:6               expression: basic_reg_exp
+0:1 - 0:6                 bre_branch
+0:1 - 0:6                   bre_expression
+0:1 - 0:6                     simple_bre
+0:1 - 0:6                       nondupl_bre
+0:1 - 0:3                         "\\("
+0:3 - 0:4                         expression: basic_reg_exp
+0:3 - 0:4                           bre_branch
+0:3 - 0:4                             bre_expression
+0:3 - 0:4                               simple_bre
+0:3 - 0:4                                 nondupl_bre
+0:3 - 0:4                                   one_char_or_coll_elem_bre
+0:3 - 0:4                                     ordinary_character `a`
+0:4 - 0:6                         "\\)"
+0:6 - 0:7               closing: delimiter `/`
+0:7 - 0:8         function: function
+0:7 - 0:8           print_function
+0:7 - 0:8             verb: function_verb `p`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+An empty group retains both delimiters (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(\)/p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: basic_reg_exp
+0:1 - 0:5                 bre_branch
+0:1 - 0:5                   bre_expression
+0:1 - 0:5                     simple_bre
+0:1 - 0:5                       nondupl_bre
+0:1 - 0:3                         "\\("
+0:3 - 0:5                         "\\)"
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+A substitution may use an empty group (BRE)
+:language(posix_sed)
+:cst
+==================
+s/\(\)/x/
+------------------
+
+0:0 - 0:9   script
+0:0 - 0:9     command_list
+0:0 - 0:9       editing_command
+0:0 - 0:9         function: function
+0:0 - 0:9           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:6             expression: basic_reg_exp
+0:2 - 0:6               bre_branch
+0:2 - 0:6                 bre_expression
+0:2 - 0:6                   simple_bre
+0:2 - 0:6                     nondupl_bre
+0:2 - 0:4                       "\\("
+0:4 - 0:6                       "\\)"
+0:6 - 0:7             middle: delimiter `/`
+0:7 - 0:8             replacement: replacement
+0:7 - 0:8               replacement_literal `x`
+0:8 - 0:9             closing: delimiter `/`
+
+==================
+A nested empty group has no expression of its own (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(\(\)\)/p
+------------------
+
+0:0  - 0:11   script
+0:0  - 0:11     command_list
+0:0  - 0:11       editing_command
+0:0  - 0:10         addresses: address_clause
+0:0  - 0:10           first: address
+0:0  - 0:10             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:9                expression: basic_reg_exp
+0:1  - 0:9                  bre_branch
+0:1  - 0:9                    bre_expression
+0:1  - 0:9                      simple_bre
+0:1  - 0:9                        nondupl_bre
+0:1  - 0:3                          "\\("
+0:3  - 0:7                          expression: basic_reg_exp
+0:3  - 0:7                            bre_branch
+0:3  - 0:7                              bre_expression
+0:3  - 0:7                                simple_bre
+0:3  - 0:7                                  nondupl_bre
+0:3  - 0:5                                    "\\("
+0:5  - 0:7                                    "\\)"
+0:7  - 0:9                          "\\)"
+0:9  - 0:10               closing: delimiter `/`
+0:10 - 0:11         function: function
+0:10 - 0:11           print_function
+0:10 - 0:11             verb: function_verb `p`
+
+==================
+An empty group can be repeated (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(\)*/p
+------------------
+
+0:0 - 0:8   script
+0:0 - 0:8     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:7         addresses: address_clause
+0:0 - 0:7           first: address
+0:0 - 0:7             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:6               expression: basic_reg_exp
+0:1 - 0:6                 bre_branch
+0:1 - 0:6                   bre_expression
+0:1 - 0:6                     simple_bre
+0:1 - 0:5                       nondupl_bre
+0:1 - 0:3                         "\\("
+0:3 - 0:5                         "\\)"
+0:5 - 0:6                       bre_dupl_symbol
+0:5 - 0:6                         "*"
+0:6 - 0:7               closing: delimiter `/`
+0:7 - 0:8         function: function
+0:7 - 0:8           print_function
+0:7 - 0:8             verb: function_verb `p`
+
+==================
+An empty group between literals remains a group (BRE)
+:language(posix_sed)
+:cst
+==================
+/a\(\)b/p
+------------------
+
+0:0 - 0:9   script
+0:0 - 0:9     command_list
+0:0 - 0:9       editing_command
+0:0 - 0:8         addresses: address_clause
+0:0 - 0:8           first: address
+0:0 - 0:8             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:7               expression: basic_reg_exp
+0:1 - 0:7                 bre_branch
+0:1 - 0:2                   bre_expression
+0:1 - 0:2                     simple_bre
+0:1 - 0:2                       nondupl_bre
+0:1 - 0:2                         one_char_or_coll_elem_bre
+0:1 - 0:2                           ordinary_character `a`
+0:2 - 0:6                   bre_expression
+0:2 - 0:6                     simple_bre
+0:2 - 0:6                       nondupl_bre
+0:2 - 0:4                         "\\("
+0:4 - 0:6                         "\\)"
+0:6 - 0:7                   bre_expression
+0:6 - 0:7                     simple_bre
+0:6 - 0:7                       nondupl_bre
+0:6 - 0:7                         one_char_or_coll_elem_bre
+0:6 - 0:7                           ordinary_character `b`
+0:7 - 0:8               closing: delimiter `/`
+0:8 - 0:9         function: function
+0:8 - 0:9           print_function
+0:8 - 0:9             verb: function_verb `p`
+
+==================
+A bodyless final substitution group still requires its closer (BRE)
+:language(posix_sed)
+:cst
+==================
+s/\(
+------------------
+
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         function: function
+0:0 - 0:4           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: basic_reg_exp
+0:2 - 0:4               bre_branch
+0:2 - 0:4                 bre_expression
+0:2 - 0:4                   simple_bre
+0:2 - 0:4                     nondupl_bre
+0:2 - 0:4                       "\\("
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         incomplete_syntax
+0:4 - 0:4                           unclosed_subexpression
+0:4 - 0:4             issue: syntax_issue
+0:4 - 0:4               incomplete_syntax
+0:4 - 0:4                 unterminated_regular_expression
+
+==================
+A bodyless substitution group before a delimiter is unclosed (BRE)
+:language(posix_sed)
+:cst
+==================
+s/\(/x/
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:7         function: function
+0:0 - 0:7           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: basic_reg_exp
+0:2 - 0:4               bre_branch
+0:2 - 0:4                 bre_expression
+0:2 - 0:4                   simple_bre
+0:2 - 0:4                     nondupl_bre
+0:2 - 0:4                       "\\("
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         undefined_syntax
+0:4 - 0:4                           unclosed_subexpression
+0:4 - 0:5             middle: delimiter `/`
+0:5 - 0:6             replacement: replacement
+0:5 - 0:6               replacement_literal `x`
+0:6 - 0:7             closing: delimiter `/`
+
+==================
+An interval retains empty (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\{\}/x/
+------------------
+
+0:0  - 0:10   script
+0:0  - 0:10     command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: basic_reg_exp
+0:2  - 0:7                bre_branch
+0:2  - 0:7                  bre_expression
+0:2  - 0:7                    simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:7                      bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:5                        issue: syntax_issue
+0:5  - 0:5                          undefined_syntax
+0:5  - 0:5                            missing_interval_minimum
+0:5  - 0:7                        "\\}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+
+==================
+An interval retains escaped comma (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\{\,\}/x/
+------------------
+
+0:0  - 0:12   script
+0:0  - 0:12     command_list
+0:0  - 0:12       editing_command
+0:0  - 0:12         function: function
+0:0  - 0:12           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:9              expression: basic_reg_exp
+0:2  - 0:9                bre_branch
+0:2  - 0:9                  bre_expression
+0:2  - 0:9                    simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:9                      bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:7                        issue: syntax_issue
+0:5  - 0:7                          undefined_syntax
+0:5  - 0:7                            invalid_interval_character `\\,`
+0:7  - 0:9                        "\\}"
+0:9  - 0:10             middle: delimiter `/`
+0:10 - 0:11             replacement: replacement
+0:10 - 0:11               replacement_literal `x`
+0:11 - 0:12             closing: delimiter `/`
+
+==================
+An interval retains invalid runs separated by an escape (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\{q\zq\}/x/
+------------------
+
+0:0  - 0:14   script
+0:0  - 0:14     command_list
+0:0  - 0:14       editing_command
+0:0  - 0:14         function: function
+0:0  - 0:14           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:11             expression: basic_reg_exp
+0:2  - 0:11               bre_branch
+0:2  - 0:11                 bre_expression
+0:2  - 0:11                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:11                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        issue: syntax_issue
+0:5  - 0:6                          undefined_syntax
+0:5  - 0:6                            invalid_interval_character `q`
+0:6  - 0:8                        issue: syntax_issue
+0:6  - 0:8                          undefined_syntax
+0:6  - 0:8                            invalid_interval_character `\\z`
+0:8  - 0:9                        issue: syntax_issue
+0:8  - 0:9                          undefined_syntax
+0:8  - 0:9                            invalid_interval_character `q`
+0:9  - 0:11                       "\\}"
+0:11 - 0:12             middle: delimiter `/`
+0:12 - 0:13             replacement: replacement
+0:12 - 0:13               replacement_literal `x`
+0:13 - 0:14             closing: delimiter `/`
+
+==================
+An interval retains omitted minimum (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\{,2\}/x/
+------------------
+
+0:0  - 0:12   script
+0:0  - 0:12     command_list
+0:0  - 0:12       editing_command
+0:0  - 0:12         function: function
+0:0  - 0:12           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:9              expression: basic_reg_exp
+0:2  - 0:9                bre_branch
+0:2  - 0:9                  bre_expression
+0:2  - 0:9                    simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:9                      bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:5                        issue: syntax_issue
+0:5  - 0:5                          undefined_syntax
+0:5  - 0:5                            missing_interval_minimum
+0:5  - 0:6                        ","
+0:6  - 0:7                        maximum: duplication_count `2`
+0:7  - 0:9                        "\\}"
+0:9  - 0:10             middle: delimiter `/`
+0:10 - 0:11             replacement: replacement
+0:10 - 0:11               replacement_literal `x`
+0:11 - 0:12             closing: delimiter `/`
+
+==================
+An interval retains malformed minimum (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\{q,2\}/x/
+------------------
+
+0:0  - 0:13   script
+0:0  - 0:13     command_list
+0:0  - 0:13       editing_command
+0:0  - 0:13         function: function
+0:0  - 0:13           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:10             expression: basic_reg_exp
+0:2  - 0:10               bre_branch
+0:2  - 0:10                 bre_expression
+0:2  - 0:10                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:10                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        issue: syntax_issue
+0:5  - 0:6                          undefined_syntax
+0:5  - 0:6                            invalid_interval_character `q`
+0:6  - 0:7                        ","
+0:7  - 0:8                        maximum: duplication_count `2`
+0:8  - 0:10                       "\\}"
+0:10 - 0:11             middle: delimiter `/`
+0:11 - 0:12             replacement: replacement
+0:11 - 0:12               replacement_literal `x`
+0:12 - 0:13             closing: delimiter `/`
+
+==================
+An interval retains separated count fragments (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\{1qq2,3zz4\}/x/
+------------------
+
+0:0  - 0:19   script
+0:0  - 0:19     command_list
+0:0  - 0:19       editing_command
+0:0  - 0:19         function: function
+0:0  - 0:19           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:16             expression: basic_reg_exp
+0:2  - 0:16               bre_branch
+0:2  - 0:16                 bre_expression
+0:2  - 0:16                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:16                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        minimum: duplication_count `1`
+0:6  - 0:8                        issue: syntax_issue
+0:6  - 0:8                          undefined_syntax
+0:6  - 0:8                            invalid_interval_character `qq`
+0:8  - 0:9                        minimum: duplication_count `2`
+0:9  - 0:10                       ","
+0:10 - 0:11                       maximum: duplication_count `3`
+0:11 - 0:13                       issue: syntax_issue
+0:11 - 0:13                         undefined_syntax
+0:11 - 0:13                           invalid_interval_character `zz`
+0:13 - 0:14                       maximum: duplication_count `4`
+0:14 - 0:16                       "\\}"
+0:16 - 0:17             middle: delimiter `/`
+0:17 - 0:18             replacement: replacement
+0:17 - 0:18               replacement_literal `x`
+0:18 - 0:19             closing: delimiter `/`
+
+==================
+An interval retains repeated separators (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\{1,2,,3\}/x/
+------------------
+
+0:0  - 0:16   script
+0:0  - 0:16     command_list
+0:0  - 0:16       editing_command
+0:0  - 0:16         function: function
+0:0  - 0:16           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:13             expression: basic_reg_exp
+0:2  - 0:13               bre_branch
+0:2  - 0:13                 bre_expression
+0:2  - 0:13                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:13                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        minimum: duplication_count `1`
+0:6  - 0:7                        ","
+0:7  - 0:8                        maximum: duplication_count `2`
+0:8  - 0:9                        issue: syntax_issue
+0:8  - 0:9                          undefined_syntax
+0:8  - 0:9                            unexpected_interval_separator
+0:8  - 0:9                              ","
+0:9  - 0:10                       issue: syntax_issue
+0:9  - 0:10                         undefined_syntax
+0:9  - 0:10                           unexpected_interval_separator
+0:9  - 0:10                             ","
+0:10 - 0:11                       maximum: duplication_count `3`
+0:11 - 0:13                       "\\}"
+0:13 - 0:14             middle: delimiter `/`
+0:14 - 0:15             replacement: replacement
+0:14 - 0:15               replacement_literal `x`
+0:15 - 0:16             closing: delimiter `/`
+
+==================
+A backreference can follow an empty BRE group (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(\)\1/p
+------------------
+
+0:0 - 0:9   script
+0:0 - 0:9     command_list
+0:0 - 0:9       editing_command
+0:0 - 0:8         addresses: address_clause
+0:0 - 0:8           first: address
+0:0 - 0:8             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:7               expression: basic_reg_exp
+0:1 - 0:7                 bre_branch
+0:1 - 0:5                   bre_expression
+0:1 - 0:5                     simple_bre
+0:1 - 0:5                       nondupl_bre
+0:1 - 0:3                         "\\("
+0:3 - 0:5                         "\\)"
+0:5 - 0:7                   bre_expression
+0:5 - 0:7                     simple_bre
+0:5 - 0:7                       nondupl_bre
+0:5 - 0:7                         backreference `\\1`
+0:7 - 0:8               closing: delimiter `/`
+0:8 - 0:9         function: function
+0:8 - 0:9           print_function
+0:8 - 0:9             verb: function_verb `p`
+
+==================
+A BRE extension escape remains neutral after duplication (BRE)
+:language(posix_sed)
+:cst
+==================
+/a*\+/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: basic_reg_exp
+0:1 - 0:5                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:2                       nondupl_bre
+0:1 - 0:2                         one_char_or_coll_elem_bre
+0:1 - 0:2                           ordinary_character `a`
+0:2 - 0:3                       bre_dupl_symbol
+0:2 - 0:3                         "*"
+0:3 - 0:5                   bre_expression
+0:3 - 0:5                     simple_bre
+0:3 - 0:5                       nondupl_bre
+0:3 - 0:5                         one_char_or_coll_elem_bre
+0:3 - 0:5                           issue: syntax_issue
+0:3 - 0:5                             implementation_defined_syntax
+0:3 - 0:5                               bre_plus_escape `\\+`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+0:7 - 1:0       command_separator
+0:7 - 0:8         `\n`
+
+==================
+An interval preserves an extra separator and its count (BRE)
+:language(posix_sed)
+:cst
+==================
+/a\{1,2,3\}/p
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:13       editing_command
+0:0  - 0:12         addresses: address_clause
+0:0  - 0:12           first: address
+0:0  - 0:12             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:11               expression: basic_reg_exp
+0:1  - 0:11                 bre_branch
+0:1  - 0:11                   bre_expression
+0:1  - 0:11                     simple_bre
+0:1  - 0:2                        nondupl_bre
+0:1  - 0:2                          one_char_or_coll_elem_bre
+0:1  - 0:2                            ordinary_character `a`
+0:2  - 0:11                       bre_dupl_symbol
+0:2  - 0:4                          "\\{"
+0:4  - 0:5                          minimum: duplication_count `1`
+0:5  - 0:6                          ","
+0:6  - 0:7                          maximum: duplication_count `2`
+0:7  - 0:8                          issue: syntax_issue
+0:7  - 0:8                            undefined_syntax
+0:7  - 0:8                              unexpected_interval_separator
+0:7  - 0:8                                ","
+0:8  - 0:9                          maximum: duplication_count `3`
+0:9  - 0:11                         "\\}"
+0:11 - 0:12               closing: delimiter `/`
+0:12 - 0:13         function: function
+0:12 - 0:13           print_function
+0:12 - 0:13             verb: function_verb `p`
+0:13 - 1:0        command_separator
+0:13 - 0:14         `\n`
+
+==================
+An unmatched unmatched_interval_close remains a source leaf (BRE)
+:language(posix_sed)
+:cst
+==================
+/\}/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         issue: syntax_issue
+0:1 - 0:3                           undefined_syntax
+0:1 - 0:3                             unmatched_interval_close `\\}`
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
+
+==================
+An unmatched unmatched_subexpression_close remains a source leaf (BRE)
+:language(posix_sed)
+:cst
+==================
+/\)/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         issue: syntax_issue
+0:1 - 0:3                           undefined_syntax
+0:1 - 0:3                             unmatched_subexpression_close `\\)`
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
+
+==================
+Regex NUL runs separate escaped and unescaped bytes (BRE)
+:language(posix_sed)
+:cst
+==================
+/\   /p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: basic_reg_exp
+0:1 - 0:5                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         one_char_or_coll_elem_bre
+0:2 - 0:3                           issue: syntax_issue
+0:2 - 0:3                             invalid_syntax
+0:2 - 0:3                               invalid_regular_expression_character `\0`
+0:3 - 0:5                   bre_expression
+0:3 - 0:5                     simple_bre
+0:3 - 0:5                       nondupl_bre
+0:3 - 0:5                         one_char_or_coll_elem_bre
+0:3 - 0:5                           issue: syntax_issue
+0:3 - 0:5                             invalid_syntax
+0:3 - 0:5                               invalid_regular_expression_character `\0\0`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+A BRE | escape retains its neutral issue leaf (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\|/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:8         function: function
+0:0 - 0:8           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:5             expression: basic_reg_exp
+0:2 - 0:5               bre_branch
+0:2 - 0:3                 bre_expression
+0:2 - 0:3                   simple_bre
+0:2 - 0:3                     nondupl_bre
+0:2 - 0:3                       one_char_or_coll_elem_bre
+0:2 - 0:3                         ordinary_character `a`
+0:3 - 0:5                 bre_expression
+0:3 - 0:5                   simple_bre
+0:3 - 0:5                     nondupl_bre
+0:3 - 0:5                       one_char_or_coll_elem_bre
+0:3 - 0:5                         issue: syntax_issue
+0:3 - 0:5                           implementation_defined_syntax
+0:3 - 0:5                             bre_vertical_line_escape `\\|`
+0:5 - 0:6             middle: delimiter `/`
+0:6 - 0:7             replacement: replacement
+0:6 - 0:7               replacement_literal `x`
+0:7 - 0:8             closing: delimiter `/`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+A BRE ? escape retains its neutral issue leaf (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\?/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:8         function: function
+0:0 - 0:8           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:5             expression: basic_reg_exp
+0:2 - 0:5               bre_branch
+0:2 - 0:3                 bre_expression
+0:2 - 0:3                   simple_bre
+0:2 - 0:3                     nondupl_bre
+0:2 - 0:3                       one_char_or_coll_elem_bre
+0:2 - 0:3                         ordinary_character `a`
+0:3 - 0:5                 bre_expression
+0:3 - 0:5                   simple_bre
+0:3 - 0:5                     nondupl_bre
+0:3 - 0:5                       one_char_or_coll_elem_bre
+0:3 - 0:5                         issue: syntax_issue
+0:3 - 0:5                           implementation_defined_syntax
+0:3 - 0:5                             bre_question_mark_escape `\\?`
+0:5 - 0:6             middle: delimiter `/`
+0:6 - 0:7             replacement: replacement
+0:6 - 0:7               replacement_literal `x`
+0:7 - 0:8             closing: delimiter `/`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+A BRE + escape retains its neutral issue leaf (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a\+/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:8         function: function
+0:0 - 0:8           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:5             expression: basic_reg_exp
+0:2 - 0:5               bre_branch
+0:2 - 0:3                 bre_expression
+0:2 - 0:3                   simple_bre
+0:2 - 0:3                     nondupl_bre
+0:2 - 0:3                       one_char_or_coll_elem_bre
+0:2 - 0:3                         ordinary_character `a`
+0:3 - 0:5                 bre_expression
+0:3 - 0:5                   simple_bre
+0:3 - 0:5                     nondupl_bre
+0:3 - 0:5                       one_char_or_coll_elem_bre
+0:3 - 0:5                         issue: syntax_issue
+0:3 - 0:5                           implementation_defined_syntax
+0:3 - 0:5                             bre_plus_escape `\\+`
+0:5 - 0:6             middle: delimiter `/`
+0:6 - 0:7             replacement: replacement
+0:6 - 0:7               replacement_literal `x`
+0:7 - 0:8             closing: delimiter `/`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+A leading BRE interval retains its duplication structure (BRE)
+:language(posix_sed)
+:cst
+==================
+s/\{2\}/x/
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: basic_reg_exp
+0:2  - 0:7                bre_branch
+0:2  - 0:7                  bre_expression
+0:2  - 0:7                    simple_bre
+0:2  - 0:7                      issue: syntax_issue
+0:2  - 0:7                        undefined_syntax
+0:2  - 0:7                          leading_duplication_symbol
+0:2  - 0:7                            operator: bre_dupl_symbol
+0:2  - 0:4                              "\\{"
+0:4  - 0:5                              minimum: duplication_count `2`
+0:5  - 0:7                              "\\}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+0:10 - 1:0        command_separator
+0:10 - 0:11         `\n`
+
+==================
+An adjacent BRE star retains its duplication structure (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a**/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:8         function: function
+0:0 - 0:8           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:5             expression: basic_reg_exp
+0:2 - 0:5               bre_branch
+0:2 - 0:5                 bre_expression
+0:2 - 0:5                   simple_bre
+0:2 - 0:3                     nondupl_bre
+0:2 - 0:3                       one_char_or_coll_elem_bre
+0:2 - 0:3                         ordinary_character `a`
+0:3 - 0:4                     bre_dupl_symbol
+0:3 - 0:4                       "*"
+0:4 - 0:5                     issue: syntax_issue
+0:4 - 0:5                       undefined_syntax
+0:4 - 0:5                         adjacent_duplication_symbol
+0:4 - 0:5                           operator: bre_dupl_symbol
+0:4 - 0:5                             "*"
+0:5 - 0:6             middle: delimiter `/`
+0:6 - 0:7             replacement: replacement
+0:6 - 0:7               replacement_literal `x`
+0:7 - 0:8             closing: delimiter `/`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+An adjacent malformed BRE interval retains its nested fault (BRE)
+:language(posix_sed)
+:cst
+==================
+s/a*\{2x\}/x/
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:13       editing_command
+0:0  - 0:13         function: function
+0:0  - 0:13           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:10             expression: basic_reg_exp
+0:2  - 0:10               bre_branch
+0:2  - 0:10                 bre_expression
+0:2  - 0:10                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:4                      bre_dupl_symbol
+0:3  - 0:4                        "*"
+0:4  - 0:10                     issue: syntax_issue
+0:4  - 0:10                       undefined_syntax
+0:4  - 0:10                         adjacent_duplication_symbol
+0:4  - 0:10                           operator: bre_dupl_symbol
+0:4  - 0:6                              "\\{"
+0:6  - 0:7                              minimum: duplication_count `2`
+0:7  - 0:8                              issue: syntax_issue
+0:7  - 0:8                                undefined_syntax
+0:7  - 0:8                                  invalid_interval_character `x`
+0:8  - 0:10                             "\\}"
+0:10 - 0:11             middle: delimiter `/`
+0:11 - 0:12             replacement: replacement
+0:11 - 0:12               replacement_literal `x`
+0:12 - 0:13             closing: delimiter `/`
+0:13 - 1:0        command_separator
+0:13 - 0:14         `\n`
+
+==================
+An empty substitution group has no invented expression (BRE)
+:language(posix_sed)
+:cst
+==================
+s/\(\)/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:9       editing_command
+0:0 - 0:9         function: function
+0:0 - 0:9           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:6             expression: basic_reg_exp
+0:2 - 0:6               bre_branch
+0:2 - 0:6                 bre_expression
+0:2 - 0:6                   simple_bre
+0:2 - 0:6                     nondupl_bre
+0:2 - 0:4                       "\\("
+0:4 - 0:6                       "\\)"
+0:6 - 0:7             middle: delimiter `/`
+0:7 - 0:8             replacement: replacement
+0:7 - 0:8               replacement_literal `x`
+0:8 - 0:9             closing: delimiter `/`
+0:9 - 1:0       command_separator
+0:9 - 0:10         `\n`
+
+==================
+A nonempty substitution group owns its expression (BRE)
+:language(posix_sed)
+:cst
+==================
+s/\(a\)/x/
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: basic_reg_exp
+0:2  - 0:7                bre_branch
+0:2  - 0:7                  bre_expression
+0:2  - 0:7                    simple_bre
+0:2  - 0:7                      nondupl_bre
+0:2  - 0:4                        "\\("
+0:4  - 0:5                        expression: basic_reg_exp
+0:4  - 0:5                          bre_branch
+0:4  - 0:5                            bre_expression
+0:4  - 0:5                              simple_bre
+0:4  - 0:5                                nondupl_bre
+0:4  - 0:5                                  one_char_or_coll_elem_bre
+0:4  - 0:5                                    ordinary_character `a`
+0:5  - 0:7                        "\\)"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+0:10 - 1:0        command_separator
+0:10 - 0:11         `\n`
+
+==================
+BRE subexpression anchors retain their application-requirement issues (BRE)
+:language(posix_sed)
+:cst
+==================
+/\(^a$\)/p
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:10       editing_command
+0:0  - 0:9          addresses: address_clause
+0:0  - 0:9            first: address
+0:0  - 0:9              context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:8                expression: basic_reg_exp
+0:1  - 0:8                  bre_branch
+0:1  - 0:8                    bre_expression
+0:1  - 0:8                      simple_bre
+0:1  - 0:8                        nondupl_bre
+0:1  - 0:3                          "\\("
+0:3  - 0:6                          expression: basic_reg_exp
+0:3  - 0:6                            bre_branch
+0:3  - 0:4                              bre_expression
+0:3  - 0:4                                simple_bre
+0:3  - 0:4                                  nondupl_bre
+0:3  - 0:4                                    one_char_or_coll_elem_bre
+0:3  - 0:4                                      issue: syntax_issue
+0:3  - 0:4                                        nonconforming_syntax
+0:3  - 0:4                                          bre_subexpression_left_anchor `^`
+0:4  - 0:5                              bre_expression
+0:4  - 0:5                                simple_bre
+0:4  - 0:5                                  nondupl_bre
+0:4  - 0:5                                    one_char_or_coll_elem_bre
+0:4  - 0:5                                      ordinary_character `a`
+0:5  - 0:6                              bre_expression
+0:5  - 0:6                                simple_bre
+0:5  - 0:6                                  nondupl_bre
+0:5  - 0:6                                    one_char_or_coll_elem_bre
+0:5  - 0:6                                      issue: syntax_issue
+0:5  - 0:6                                        nonconforming_syntax
+0:5  - 0:6                                          bre_subexpression_right_anchor `$`
+0:6  - 0:8                          "\\)"
+0:8  - 0:9                closing: delimiter `/`
+0:9  - 0:10         function: function
+0:9  - 0:10           print_function
+0:9  - 0:10             verb: function_verb `p`
+0:10 - 1:0        command_separator
+0:10 - 0:11         `\n`
