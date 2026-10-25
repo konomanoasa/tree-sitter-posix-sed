@@ -164,8 +164,7 @@ static unsigned sed_scanner_serialize(void *payload, char *buffer) {
   buffer[14] = (char)state->regex_bracket_first_element;
   buffer[15] = (char)state->regex_bracket_last_element;
   buffer[16] = (char)state->regex_bracket_element_count;
-  // The default state must equal the empty state before the first external
-  // token, or reuse fails after an edit that adds or removes external tokens.
+  // Match Tree-sitter's empty initial state.
   for (unsigned index = 0; index < SCANNER_SERIALIZED_STATE_SIZE; index++) {
     if (buffer[index] != 0) return SCANNER_SERIALIZED_STATE_SIZE;
   }
@@ -651,9 +650,6 @@ static bool scan_post_blank_recovery(
   const bool *valid_symbols,
   TSSymbol *symbol
 ) {
-  lexer->mark_end(lexer);
-  advance_past_blanks(lexer);
-
   const bool after_separator = omitted_address_is_valid(valid_symbols);
   if (
     valid_symbols[BLANKS_AROUND_ADDRESS_SEPARATOR] &&
@@ -695,6 +691,21 @@ static bool scan_post_blank_recovery(
     return true;
   }
   return scan_unexpected_command_text(lexer, valid_symbols, symbol, true);
+}
+
+static bool scan_argument_separator(
+  TSLexer *lexer,
+  const bool *valid_symbols,
+  TSSymbol *symbol
+) {
+  lexer->mark_end(lexer);
+  advance(lexer);
+  if (!at_line_end(lexer)) {
+    lexer->mark_end(lexer);
+    *symbol = ARGUMENT_SEPARATOR;
+    return true;
+  }
+  return scan_post_blank_recovery(lexer, valid_symbols, symbol);
 }
 
 static bool scan_text_token(
@@ -2113,6 +2124,8 @@ static bool scan_command_recovery(
 
   if (is_blank(lexer->lookahead)) {
     if (post_blank_recovery_is_valid(valid_symbols)) {
+      lexer->mark_end(lexer);
+      advance_past_blanks(lexer);
       return scan_post_blank_recovery(lexer, valid_symbols, symbol);
     }
     if (valid_symbols[BRACE_LEADING_BLANKS]) {
@@ -2300,11 +2313,8 @@ static bool scan_command_token(
   }
 
   // Recovery can swallow a '}'-leading label's separator.
-  if (
-    lexer->lookahead == ' ' &&
-    consume_as(lexer, valid_symbols, ARGUMENT_SEPARATOR, symbol)
-  ) {
-    return true;
+  if (lexer->lookahead == ' ' && valid_symbols[ARGUMENT_SEPARATOR]) {
+    return scan_argument_separator(lexer, valid_symbols, symbol);
   }
 
   if (

@@ -821,14 +821,12 @@ function functionRules() {
     ],
     optionalLabel: ($) => [
       optional(
-        prec.right(
-          seq(
-            field(
-              "separator",
-              alias($._argument_separator, $.argument_separator),
-            ),
-            optional(field("label", $.label)),
+        seq(
+          field(
+            "separator",
+            alias($._argument_separator, $.argument_separator),
           ),
+          field("label", $.label),
         ),
       ),
     ],

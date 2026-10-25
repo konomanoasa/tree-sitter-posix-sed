@@ -413,9 +413,9 @@ const invalidEncodingCases = [
 ];
 
 for (const grammar of grammars) {
-  test(`${grammar.name}: invalid encoding leaves only identified source bytes highlighted`, () => {
-    const path = join(directory, `${grammar.name}-lexical.sed`);
-    for (const testCase of invalidEncodingCases) {
+  for (const testCase of invalidEncodingCases) {
+    test(`${grammar.name}: ${testCase.name}: only identified bytes are highlighted`, () => {
+      const path = join(directory, `${grammar.name}-lexical.sed`);
       writeFileSync(path, testCase.source);
       const output = assertCommand([
         "query",
@@ -447,8 +447,8 @@ for (const grammar of grammars) {
           });
         assert.deepEqual(captures, ranges, `${testCase.name}: ${capture}`);
       }
-    }
-  });
+    });
+  }
 }
 
 const finalCaptureCases = [

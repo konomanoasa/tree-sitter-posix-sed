@@ -2227,3 +2227,1894 @@ BRE subexpression anchors retain their application-requirement issues (BRE)
 0:9  - 0:10             verb: function_verb `p`
 0:10 - 1:0        command_separator
 0:10 - 0:11         `\n`
+==================
+exposes POSIX repetition modifiers
+:language(posix_sed_ere)
+==================
+/a*?b+?c??d{2,3}?/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol
+                    (repetition_modifier)))
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol
+                    (repetition_modifier)))
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol
+                    (repetition_modifier)))
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol
+                    (duplication_count)
+                    (duplication_count)
+                    (repetition_modifier)))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+mirrors the POSIX ERE production hierarchy
+:language(posix_sed_ere)
+:cst
+==================
+s#^(ab|c)+d{2,3}$#x#
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:20       editing_command
+0:0  - 0:20         function: function
+0:0  - 0:20           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `#`
+0:2  - 0:17             expression: extended_reg_exp
+0:2  - 0:17               ere_branch
+0:2  - 0:3                  ere_expression
+0:2  - 0:3                    "^"
+0:3  - 0:10                 ere_expression
+0:3  - 0:4                    "("
+0:4  - 0:8                    expression: extended_reg_exp
+0:4  - 0:6                      ere_branch
+0:4  - 0:5                        ere_expression
+0:4  - 0:5                          one_char_or_coll_elem_ere
+0:4  - 0:5                            ordinary_character `a`
+0:5  - 0:6                        ere_expression
+0:5  - 0:6                          one_char_or_coll_elem_ere
+0:5  - 0:6                            ordinary_character `b`
+0:6  - 0:7                      "|"
+0:7  - 0:8                      ere_branch
+0:7  - 0:8                        ere_expression
+0:7  - 0:8                          one_char_or_coll_elem_ere
+0:7  - 0:8                            ordinary_character `c`
+0:8  - 0:9                    ")"
+0:9  - 0:10                   ere_dupl_symbol
+0:9  - 0:10                     "+"
+0:10 - 0:16                 ere_expression
+0:10 - 0:11                   one_char_or_coll_elem_ere
+0:10 - 0:11                     ordinary_character `d`
+0:11 - 0:16                   ere_dupl_symbol
+0:11 - 0:12                     "{"
+0:12 - 0:13                     minimum: duplication_count `2`
+0:13 - 0:14                     ","
+0:14 - 0:15                     maximum: duplication_count `3`
+0:15 - 0:16                     "}"
+0:16 - 0:17                 ere_expression
+0:16 - 0:17                   "$"
+0:17 - 0:18             middle: delimiter `#`
+0:18 - 0:19             replacement: replacement
+0:18 - 0:19               replacement_literal `x`
+0:19 - 0:20             closing: delimiter `#`
+0:20 - 1:0        command_separator
+0:20 - 0:21         `\n`
+
+==================
+preserves adjacent and leading ERE duplication structures
+:language(posix_sed_ere)
+==================
+/a*{2}?|{3}/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol)
+                  (syntax_issue
+                    (undefined_syntax
+                      (adjacent_duplication_symbol
+                        (ere_dupl_symbol
+                          (duplication_count)
+                          (repetition_modifier)))))))
+              (ere_branch
+                (ere_expression
+                  (syntax_issue
+                    (undefined_syntax
+                      (leading_duplication_symbol
+                        (ere_dupl_symbol
+                          (duplication_count))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+accepts empty ERE groups and classifies empty alternatives
+:language(posix_sed_ere)
+==================
+/()a||b/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression)
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))))
+              (syntax_issue
+                (undefined_syntax
+                  (empty_alternative)))
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character)))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+A bracket expression after a malformed interval remains outside it (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a{1[bc]}/p
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:11       editing_command
+0:0  - 0:10         addresses: address_clause
+0:0  - 0:10           first: address
+0:0  - 0:10             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:9                expression: extended_reg_exp
+0:1  - 0:9                  ere_branch
+0:1  - 0:4                    ere_expression
+0:1  - 0:2                      one_char_or_coll_elem_ere
+0:1  - 0:2                        ordinary_character `a`
+0:2  - 0:4                      ere_dupl_symbol
+0:2  - 0:3                        "{"
+0:3  - 0:4                        minimum: duplication_count `1`
+0:4  - 0:4                        issue: syntax_issue
+0:4  - 0:4                          undefined_syntax
+0:4  - 0:4                            missing_interval_close
+0:4  - 0:8                    ere_expression
+0:4  - 0:8                      one_char_or_coll_elem_ere
+0:4  - 0:8                        bracket_expression
+0:4  - 0:5                          "["
+0:5  - 0:7                          matching_list
+0:5  - 0:7                            bracket_list
+0:5  - 0:7                              follow_list
+0:5  - 0:6                                expression_term
+0:5  - 0:6                                  single_expression
+0:5  - 0:6                                    end_range
+0:5  - 0:6                                      collating_element_single `b`
+0:6  - 0:7                                expression_term
+0:6  - 0:7                                  single_expression
+0:6  - 0:7                                    end_range
+0:6  - 0:7                                      collating_element_single `c`
+0:7  - 0:8                          "]"
+0:8  - 0:9                    ere_expression
+0:8  - 0:9                      one_char_or_coll_elem_ere
+0:8  - 0:9                        ordinary_character `}`
+0:9  - 0:10               closing: delimiter `/`
+0:10 - 0:11         function: function
+0:10 - 0:11           print_function
+0:10 - 0:11             verb: function_verb `p`
+0:11 - 1:0        command_separator
+0:11 - 0:12         `\n`
+
+==================
+A group closer after a malformed interval remains outside it (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(a{2)/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:7         addresses: address_clause
+0:0 - 0:7           first: address
+0:0 - 0:7             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:6               expression: extended_reg_exp
+0:1 - 0:6                 ere_branch
+0:1 - 0:6                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:5                     expression: extended_reg_exp
+0:2 - 0:5                       ere_branch
+0:2 - 0:5                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:5                           ere_dupl_symbol
+0:3 - 0:4                             "{"
+0:4 - 0:5                             minimum: duplication_count `2`
+0:5 - 0:5                             issue: syntax_issue
+0:5 - 0:5                               undefined_syntax
+0:5 - 0:5                                 missing_interval_close
+0:5 - 0:6                     ")"
+0:6 - 0:7               closing: delimiter `/`
+0:7 - 0:8         function: function
+0:7 - 0:8           print_function
+0:7 - 0:8             verb: function_verb `p`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+leaves an alternative outside a malformed ERE interval
+:language(posix_sed_ere)
+==================
+/a{1|b/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol
+                    (duplication_count)
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_close))))))
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character)))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+structures a leading malformed ERE interval
+:language(posix_sed_ere)
+==================
+/{x}/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (syntax_issue
+                    (undefined_syntax
+                      (leading_duplication_symbol
+                        (ere_dupl_symbol
+                          (syntax_issue
+                            (undefined_syntax
+                              (invalid_interval_character))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+rejects an ERE interval whose delimiter prevents completion at EOF
+:language(posix_sed_ere)
+==================
+s}a{1
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (duplication_count)
+                  (syntax_issue
+                    (undefined_syntax
+                      (missing_interval_close)))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
+==================
+recognizes escaped interval comma and count in ERE
+:language(posix_sed_ere)
+==================
+s,a{1\,2},b,
+s1a{\12}1b1
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (duplication_count)
+                  (escaped_delimiter)
+                  (duplication_count)))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (escaped_delimiter)
+                  (duplication_count)))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+classifies a trailing interval escape as incomplete before an escaped digit delimiter
+:language(posix_sed_ere)
+==================
+s1a{\
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (syntax_issue
+                    (incomplete_syntax
+                      (incomplete_regular_expression_escape)))
+                  (syntax_issue
+                    (incomplete_syntax
+                      (missing_interval_close)))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
+==================
+classifies a trailing interval escape as incomplete before an escaped comma delimiter
+:language(posix_sed_ere)
+==================
+s,a{1\
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (duplication_count)
+                  (syntax_issue
+                    (incomplete_syntax
+                      (incomplete_regular_expression_escape)))
+                  (syntax_issue
+                    (incomplete_syntax
+                      (missing_interval_close)))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
+==================
+owns a NUL inside a malformed ERE interval
+:language(posix_sed_ere)
+==================
+s/a{x y}/z/
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (syntax_issue
+                    (undefined_syntax
+                      (invalid_interval_character)))
+                  (syntax_issue
+                    (invalid_syntax
+                      (invalid_regular_expression_character)))
+                  (syntax_issue
+                    (undefined_syntax
+                      (invalid_interval_character)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+owns a NUL inside an escaped ERE atom
+:language(posix_sed_ere)
+==================
+s/\ /z/
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (syntax_issue
+                    (invalid_syntax
+                      (invalid_regular_expression_character)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
+==================
+An unfinished empty group has no invented body (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(
+------------------
+
+0:0 - 0:2   script
+0:0 - 0:2     command_list
+0:0 - 0:2       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:2           first: address
+0:0 - 0:2             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:2               expression: extended_reg_exp
+0:1 - 0:2                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:2                     issue: syntax_issue
+0:2 - 0:2                       incomplete_syntax
+0:2 - 0:2                         unclosed_subexpression
+0:2 - 0:2               issue: syntax_issue
+0:2 - 0:2                 incomplete_syntax
+0:2 - 0:2                   unterminated_regular_expression
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           incomplete_syntax
+0:2 - 0:2             missing_function
+
+==================
+A final backslash retains its incomplete regular expression escape (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a\
+------------------
+
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:3           first: address
+0:0 - 0:3             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: extended_reg_exp
+0:1 - 0:3                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:3                   ere_expression
+0:2 - 0:3                     one_char_or_coll_elem_ere
+0:2 - 0:3                       issue: syntax_issue
+0:2 - 0:3                         incomplete_syntax
+0:2 - 0:3                           incomplete_regular_expression_escape `\\`
+0:3 - 0:3               issue: syntax_issue
+0:3 - 0:3                 incomplete_syntax
+0:3 - 0:3                   unterminated_regular_expression
+0:3 - 0:3         issue: syntax_issue
+0:3 - 0:3           incomplete_syntax
+0:3 - 0:3             missing_function
+
+==================
+A quoted character is a direct source leaf (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a\./p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:5           first: address
+0:0 - 0:5             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:4                   ere_expression
+0:2 - 0:4                     one_char_or_coll_elem_ere
+0:2 - 0:4                       quoted_character `\\.`
+0:4 - 0:5               closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
+==================
+A nonempty group owns its expression and delimiters (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(a)/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:5           first: address
+0:0 - 0:5             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:4                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:3                     expression: extended_reg_exp
+0:2 - 0:3                       ere_branch
+0:2 - 0:3                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:4                     ")"
+0:4 - 0:5               closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
+==================
+An empty group retains both delimiters (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/()/p
+------------------
+
+0:0 - 0:5   script
+0:0 - 0:5     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: extended_reg_exp
+0:1 - 0:3                 ere_branch
+0:1 - 0:3                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:3                     ")"
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+
+==================
+A substitution may use an empty group (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/()/x/
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:7         function: function
+0:0 - 0:7           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: extended_reg_exp
+0:2 - 0:4               ere_branch
+0:2 - 0:4                 ere_expression
+0:2 - 0:3                   "("
+0:3 - 0:4                   ")"
+0:4 - 0:5             middle: delimiter `/`
+0:5 - 0:6             replacement: replacement
+0:5 - 0:6               replacement_literal `x`
+0:6 - 0:7             closing: delimiter `/`
+
+==================
+A nested empty group has no expression of its own (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(())/p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:5                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:4                     expression: extended_reg_exp
+0:2 - 0:4                       ere_branch
+0:2 - 0:4                         ere_expression
+0:2 - 0:3                           "("
+0:3 - 0:4                           ")"
+0:4 - 0:5                     ")"
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+An empty group can be repeated (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/()*?/p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:5                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:3                     ")"
+0:3 - 0:5                     ere_dupl_symbol
+0:3 - 0:4                       "*"
+0:4 - 0:5                       modifier: repetition_modifier `?`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+An empty group between literals remains a group (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a()b/p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:4                   ere_expression
+0:2 - 0:3                     "("
+0:3 - 0:4                     ")"
+0:4 - 0:5                   ere_expression
+0:4 - 0:5                     one_char_or_coll_elem_ere
+0:4 - 0:5                       ordinary_character `b`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+A bodyless final substitution group still requires its closer (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/(
+------------------
+
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         function: function
+0:0 - 0:3           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:3             expression: extended_reg_exp
+0:2 - 0:3               ere_branch
+0:2 - 0:3                 ere_expression
+0:2 - 0:3                   "("
+0:3 - 0:3                   issue: syntax_issue
+0:3 - 0:3                     incomplete_syntax
+0:3 - 0:3                       unclosed_subexpression
+0:3 - 0:3             issue: syntax_issue
+0:3 - 0:3               incomplete_syntax
+0:3 - 0:3                 unterminated_regular_expression
+
+==================
+A bodyless substitution group before a delimiter is unclosed (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/(/x/
+------------------
+
+0:0 - 0:6   script
+0:0 - 0:6     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:6         function: function
+0:0 - 0:6           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:3             expression: extended_reg_exp
+0:2 - 0:3               ere_branch
+0:2 - 0:3                 ere_expression
+0:2 - 0:3                   "("
+0:3 - 0:3                   issue: syntax_issue
+0:3 - 0:3                     undefined_syntax
+0:3 - 0:3                       unclosed_subexpression
+0:3 - 0:4             middle: delimiter `/`
+0:4 - 0:5             replacement: replacement
+0:4 - 0:5               replacement_literal `x`
+0:5 - 0:6             closing: delimiter `/`
+
+==================
+An interval retains empty (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{}/x/
+------------------
+
+0:0 - 0:8   script
+0:0 - 0:8     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:8         function: function
+0:0 - 0:8           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:5             expression: extended_reg_exp
+0:2 - 0:5               ere_branch
+0:2 - 0:5                 ere_expression
+0:2 - 0:3                   one_char_or_coll_elem_ere
+0:2 - 0:3                     ordinary_character `a`
+0:3 - 0:5                   ere_dupl_symbol
+0:3 - 0:4                     "{"
+0:4 - 0:4                     issue: syntax_issue
+0:4 - 0:4                       undefined_syntax
+0:4 - 0:4                         missing_interval_minimum
+0:4 - 0:5                     "}"
+0:5 - 0:6             middle: delimiter `/`
+0:6 - 0:7             replacement: replacement
+0:6 - 0:7               replacement_literal `x`
+0:7 - 0:8             closing: delimiter `/`
+
+==================
+An interval retains escaped comma (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{\,}/x/
+------------------
+
+0:0  - 0:10   script
+0:0  - 0:10     command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: extended_reg_exp
+0:2  - 0:7                ere_branch
+0:2  - 0:7                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:7                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:6                      issue: syntax_issue
+0:4  - 0:6                        undefined_syntax
+0:4  - 0:6                          invalid_interval_character `\\,`
+0:6  - 0:7                      "}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+
+==================
+An interval retains invalid runs separated by an escape (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{q\zq}/x/
+------------------
+
+0:0  - 0:12   script
+0:0  - 0:12     command_list
+0:0  - 0:12       editing_command
+0:0  - 0:12         function: function
+0:0  - 0:12           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:9              expression: extended_reg_exp
+0:2  - 0:9                ere_branch
+0:2  - 0:9                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:9                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      issue: syntax_issue
+0:4  - 0:5                        undefined_syntax
+0:4  - 0:5                          invalid_interval_character `q`
+0:5  - 0:7                      issue: syntax_issue
+0:5  - 0:7                        undefined_syntax
+0:5  - 0:7                          invalid_interval_character `\\z`
+0:7  - 0:8                      issue: syntax_issue
+0:7  - 0:8                        undefined_syntax
+0:7  - 0:8                          invalid_interval_character `q`
+0:8  - 0:9                      "}"
+0:9  - 0:10             middle: delimiter `/`
+0:10 - 0:11             replacement: replacement
+0:10 - 0:11               replacement_literal `x`
+0:11 - 0:12             closing: delimiter `/`
+
+==================
+An interval retains omitted minimum (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{,2}/x/
+------------------
+
+0:0  - 0:10   script
+0:0  - 0:10     command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: extended_reg_exp
+0:2  - 0:7                ere_branch
+0:2  - 0:7                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:7                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:4                      issue: syntax_issue
+0:4  - 0:4                        undefined_syntax
+0:4  - 0:4                          missing_interval_minimum
+0:4  - 0:5                      ","
+0:5  - 0:6                      maximum: duplication_count `2`
+0:6  - 0:7                      "}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+
+==================
+An interval retains malformed minimum (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{q,2}/x/
+------------------
+
+0:0  - 0:11   script
+0:0  - 0:11     command_list
+0:0  - 0:11       editing_command
+0:0  - 0:11         function: function
+0:0  - 0:11           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:8              expression: extended_reg_exp
+0:2  - 0:8                ere_branch
+0:2  - 0:8                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:8                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      issue: syntax_issue
+0:4  - 0:5                        undefined_syntax
+0:4  - 0:5                          invalid_interval_character `q`
+0:5  - 0:6                      ","
+0:6  - 0:7                      maximum: duplication_count `2`
+0:7  - 0:8                      "}"
+0:8  - 0:9              middle: delimiter `/`
+0:9  - 0:10             replacement: replacement
+0:9  - 0:10               replacement_literal `x`
+0:10 - 0:11             closing: delimiter `/`
+
+==================
+An interval retains separated count fragments (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{1qq2,3zz4}/x/
+------------------
+
+0:0  - 0:17   script
+0:0  - 0:17     command_list
+0:0  - 0:17       editing_command
+0:0  - 0:17         function: function
+0:0  - 0:17           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:14             expression: extended_reg_exp
+0:2  - 0:14               ere_branch
+0:2  - 0:14                 ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:14                   ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      minimum: duplication_count `1`
+0:5  - 0:7                      issue: syntax_issue
+0:5  - 0:7                        undefined_syntax
+0:5  - 0:7                          invalid_interval_character `qq`
+0:7  - 0:8                      minimum: duplication_count `2`
+0:8  - 0:9                      ","
+0:9  - 0:10                     maximum: duplication_count `3`
+0:10 - 0:12                     issue: syntax_issue
+0:10 - 0:12                       undefined_syntax
+0:10 - 0:12                         invalid_interval_character `zz`
+0:12 - 0:13                     maximum: duplication_count `4`
+0:13 - 0:14                     "}"
+0:14 - 0:15             middle: delimiter `/`
+0:15 - 0:16             replacement: replacement
+0:15 - 0:16               replacement_literal `x`
+0:16 - 0:17             closing: delimiter `/`
+
+==================
+An interval retains repeated separators (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{1,2,,3}/x/
+------------------
+
+0:0  - 0:14   script
+0:0  - 0:14     command_list
+0:0  - 0:14       editing_command
+0:0  - 0:14         function: function
+0:0  - 0:14           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:11             expression: extended_reg_exp
+0:2  - 0:11               ere_branch
+0:2  - 0:11                 ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:11                   ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      minimum: duplication_count `1`
+0:5  - 0:6                      ","
+0:6  - 0:7                      maximum: duplication_count `2`
+0:7  - 0:8                      issue: syntax_issue
+0:7  - 0:8                        undefined_syntax
+0:7  - 0:8                          unexpected_interval_separator
+0:7  - 0:8                            ","
+0:8  - 0:9                      issue: syntax_issue
+0:8  - 0:9                        undefined_syntax
+0:8  - 0:9                          unexpected_interval_separator
+0:8  - 0:9                            ","
+0:9  - 0:10                     maximum: duplication_count `3`
+0:10 - 0:11                     "}"
+0:11 - 0:12             middle: delimiter `/`
+0:12 - 0:13             replacement: replacement
+0:12 - 0:13               replacement_literal `x`
+0:13 - 0:14             closing: delimiter `/`
+
+==================
+An empty group can precede an ERE alternative (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/()|a/p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:3                 ere_branch
+0:1 - 0:3                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:3                     ")"
+0:3 - 0:4                 "|"
+0:4 - 0:5                 ere_branch
+0:4 - 0:5                   ere_expression
+0:4 - 0:5                     one_char_or_coll_elem_ere
+0:4 - 0:5                       ordinary_character `a`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+An alternative can contain an empty group (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(a|())/p
+------------------
+
+0:0 - 0:9   script
+0:0 - 0:9     command_list
+0:0 - 0:9       editing_command
+0:0 - 0:8         addresses: address_clause
+0:0 - 0:8           first: address
+0:0 - 0:8             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:7               expression: extended_reg_exp
+0:1 - 0:7                 ere_branch
+0:1 - 0:7                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:6                     expression: extended_reg_exp
+0:2 - 0:3                       ere_branch
+0:2 - 0:3                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:4                       "|"
+0:4 - 0:6                       ere_branch
+0:4 - 0:6                         ere_expression
+0:4 - 0:5                           "("
+0:5 - 0:6                           ")"
+0:6 - 0:7                     ")"
+0:7 - 0:8               closing: delimiter `/`
+0:8 - 0:9         function: function
+0:8 - 0:9           print_function
+0:8 - 0:9             verb: function_verb `p`
+
+==================
+An unmatched ERE closer remains ordinary text (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/())/p
+------------------
+
+0:0 - 0:6   script
+0:0 - 0:6     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:5           first: address
+0:0 - 0:5             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:3                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:3                     ")"
+0:3 - 0:4                   ere_expression
+0:3 - 0:4                     one_char_or_coll_elem_ere
+0:3 - 0:4                       ordinary_character `)`
+0:4 - 0:5               closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+
+==================
+An omitted leading ERE alternative has no branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/|a/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: extended_reg_exp
+0:1 - 0:1                 issue: syntax_issue
+0:1 - 0:1                   undefined_syntax
+0:1 - 0:1                     empty_alternative
+0:1 - 0:2                 "|"
+0:2 - 0:3                 ere_branch
+0:2 - 0:3                   ere_expression
+0:2 - 0:3                     one_char_or_coll_elem_ere
+0:2 - 0:3                       ordinary_character `a`
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
+
+==================
+An omitted trailing ERE alternative has no branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a|/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: extended_reg_exp
+0:1 - 0:2                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:3                 "|"
+0:3 - 0:3                 issue: syntax_issue
+0:3 - 0:3                   undefined_syntax
+0:3 - 0:3                     empty_alternative
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
+
+==================
+Two empty ERE alternatives have no branches (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/|/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:3           first: address
+0:0 - 0:3             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:2               expression: extended_reg_exp
+0:1 - 0:1                 issue: syntax_issue
+0:1 - 0:1                   undefined_syntax
+0:1 - 0:1                     empty_alternative
+0:1 - 0:2                 "|"
+0:2 - 0:2                 issue: syntax_issue
+0:2 - 0:2                   undefined_syntax
+0:2 - 0:2                     empty_alternative
+0:2 - 0:3               closing: delimiter `/`
+0:3 - 0:4         function: function
+0:3 - 0:4           print_function
+0:3 - 0:4             verb: function_verb `p`
+0:4 - 1:0       command_separator
+0:4 - 0:5         `\n`
+
+==================
+An empty alternative inside a group belongs to its expression (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(|)/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:5           first: address
+0:0 - 0:5             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:4                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:3                     expression: extended_reg_exp
+0:2 - 0:2                       issue: syntax_issue
+0:2 - 0:2                         undefined_syntax
+0:2 - 0:2                           empty_alternative
+0:2 - 0:3                       "|"
+0:3 - 0:3                       issue: syntax_issue
+0:3 - 0:3                         undefined_syntax
+0:3 - 0:3                           empty_alternative
+0:3 - 0:4                     ")"
+0:4 - 0:5               closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
+==================
+An unfinished alternative and group retain independent issues (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(a|
+------------------
+
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:4                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:4                     expression: extended_reg_exp
+0:2 - 0:3                       ere_branch
+0:2 - 0:3                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:4                       "|"
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         incomplete_syntax
+0:4 - 0:4                           empty_alternative
+0:4 - 0:4                     issue: syntax_issue
+0:4 - 0:4                       incomplete_syntax
+0:4 - 0:4                         unclosed_subexpression
+0:4 - 0:4               issue: syntax_issue
+0:4 - 0:4                 incomplete_syntax
+0:4 - 0:4                   unterminated_regular_expression
+0:4 - 0:4         issue: syntax_issue
+0:4 - 0:4           incomplete_syntax
+0:4 - 0:4             missing_function
+
+==================
+An unfinished interval at EOF retains its count (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a{1
+------------------
+
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:4                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:4                     ere_dupl_symbol
+0:2 - 0:3                       "{"
+0:3 - 0:4                       minimum: duplication_count `1`
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         incomplete_syntax
+0:4 - 0:4                           missing_interval_close
+0:4 - 0:4               issue: syntax_issue
+0:4 - 0:4                 incomplete_syntax
+0:4 - 0:4                   unterminated_regular_expression
+0:4 - 0:4         issue: syntax_issue
+0:4 - 0:4           incomplete_syntax
+0:4 - 0:4             missing_function
+
+==================
+An unmatched group closer is malformed interval content after 1 (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a{1)}/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:7         addresses: address_clause
+0:0 - 0:7           first: address
+0:0 - 0:7             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:6               expression: extended_reg_exp
+0:1 - 0:6                 ere_branch
+0:1 - 0:6                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:6                     ere_dupl_symbol
+0:2 - 0:3                       "{"
+0:3 - 0:4                       minimum: duplication_count `1`
+0:4 - 0:5                       issue: syntax_issue
+0:4 - 0:5                         undefined_syntax
+0:4 - 0:5                           invalid_interval_character `)`
+0:5 - 0:6                       "}"
+0:6 - 0:7               closing: delimiter `/`
+0:7 - 0:8         function: function
+0:7 - 0:8           print_function
+0:7 - 0:8             verb: function_verb `p`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+An unmatched group closer is malformed interval content after an omitted count (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a{)}/p
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:5                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:5                     ere_dupl_symbol
+0:2 - 0:3                       "{"
+0:3 - 0:4                       issue: syntax_issue
+0:3 - 0:4                         undefined_syntax
+0:3 - 0:4                           invalid_interval_character `)`
+0:4 - 0:5                       "}"
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+0:7 - 1:0       command_separator
+0:7 - 0:8         `\n`
+
+==================
+An interval escape with no usable delimiter is invalid at EOF (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a{1\
+------------------
+
+0:0 - 0:6   script
+0:0 - 0:6     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:6         function: function
+0:0 - 0:6           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:6             expression: extended_reg_exp
+0:2 - 0:6               ere_branch
+0:2 - 0:6                 ere_expression
+0:2 - 0:3                   one_char_or_coll_elem_ere
+0:2 - 0:3                     ordinary_character `a`
+0:3 - 0:6                   ere_dupl_symbol
+0:3 - 0:4                     "{"
+0:4 - 0:5                     minimum: duplication_count `1`
+0:5 - 0:6                     issue: syntax_issue
+0:5 - 0:6                       undefined_syntax
+0:5 - 0:6                         invalid_interval_character `\\`
+0:6 - 0:6                     issue: syntax_issue
+0:6 - 0:6                       incomplete_syntax
+0:6 - 0:6                         missing_interval_close
+0:6 - 0:6             issue: syntax_issue
+0:6 - 0:6               incomplete_syntax
+0:6 - 0:6                 unterminated_regular_expression
+
+==================
+Regex NUL runs separate escaped and unescaped bytes (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/\   /p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:3                   ere_expression
+0:1 - 0:3                     one_char_or_coll_elem_ere
+0:2 - 0:3                       issue: syntax_issue
+0:2 - 0:3                         invalid_syntax
+0:2 - 0:3                           invalid_regular_expression_character `\0`
+0:3 - 0:5                   ere_expression
+0:3 - 0:5                     one_char_or_coll_elem_ere
+0:3 - 0:5                       issue: syntax_issue
+0:3 - 0:5                         invalid_syntax
+0:3 - 0:5                           invalid_regular_expression_character `\0\0`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+A leading ERE repetition retains its modifier (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/+?/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:7         function: function
+0:0 - 0:7           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: extended_reg_exp
+0:2 - 0:4               ere_branch
+0:2 - 0:4                 ere_expression
+0:2 - 0:4                   issue: syntax_issue
+0:2 - 0:4                     undefined_syntax
+0:2 - 0:4                       leading_duplication_symbol
+0:2 - 0:4                         operator: ere_dupl_symbol
+0:2 - 0:3                           "+"
+0:3 - 0:4                           modifier: repetition_modifier `?`
+0:4 - 0:5             middle: delimiter `/`
+0:5 - 0:6             replacement: replacement
+0:5 - 0:6               replacement_literal `x`
+0:6 - 0:7             closing: delimiter `/`
+0:7 - 1:0       command_separator
+0:7 - 0:8         `\n`
+
+==================
+An adjacent ERE repetition retains its modifier (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a**?/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:9       editing_command
+0:0 - 0:9         function: function
+0:0 - 0:9           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:6             expression: extended_reg_exp
+0:2 - 0:6               ere_branch
+0:2 - 0:6                 ere_expression
+0:2 - 0:3                   one_char_or_coll_elem_ere
+0:2 - 0:3                     ordinary_character `a`
+0:3 - 0:4                   ere_dupl_symbol
+0:3 - 0:4                     "*"
+0:4 - 0:6                   issue: syntax_issue
+0:4 - 0:6                     undefined_syntax
+0:4 - 0:6                       adjacent_duplication_symbol
+0:4 - 0:6                         operator: ere_dupl_symbol
+0:4 - 0:5                           "*"
+0:5 - 0:6                           modifier: repetition_modifier `?`
+0:6 - 0:7             middle: delimiter `/`
+0:7 - 0:8             replacement: replacement
+0:7 - 0:8               replacement_literal `x`
+0:8 - 0:9             closing: delimiter `/`
+0:9 - 1:0       command_separator
+0:9 - 0:10         `\n`
+
+==================
+An adjacent malformed ERE interval retains its nested fault (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/a*{2x}/x/
+
+------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:11       editing_command
+0:0  - 0:11         function: function
+0:0  - 0:11           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:8              expression: extended_reg_exp
+0:2  - 0:8                ere_branch
+0:2  - 0:8                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:4                    ere_dupl_symbol
+0:3  - 0:4                      "*"
+0:4  - 0:8                    issue: syntax_issue
+0:4  - 0:8                      undefined_syntax
+0:4  - 0:8                        adjacent_duplication_symbol
+0:4  - 0:8                          operator: ere_dupl_symbol
+0:4  - 0:5                            "{"
+0:5  - 0:6                            minimum: duplication_count `2`
+0:6  - 0:7                            issue: syntax_issue
+0:6  - 0:7                              undefined_syntax
+0:6  - 0:7                                invalid_interval_character `x`
+0:7  - 0:8                            "}"
+0:8  - 0:9              middle: delimiter `/`
+0:9  - 0:10             replacement: replacement
+0:9  - 0:10               replacement_literal `x`
+0:10 - 0:11             closing: delimiter `/`
+0:11 - 1:0        command_separator
+0:11 - 0:12         `\n`
+
+==================
+An empty substitution group has no invented expression (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/()/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:7         function: function
+0:0 - 0:7           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: extended_reg_exp
+0:2 - 0:4               ere_branch
+0:2 - 0:4                 ere_expression
+0:2 - 0:3                   "("
+0:3 - 0:4                   ")"
+0:4 - 0:5             middle: delimiter `/`
+0:5 - 0:6             replacement: replacement
+0:5 - 0:6               replacement_literal `x`
+0:6 - 0:7             closing: delimiter `/`
+0:7 - 1:0       command_separator
+0:7 - 0:8         `\n`
+
+==================
+A nonempty substitution group owns its expression (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+s/(a)/x/
+
+------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:8         function: function
+0:0 - 0:8           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:5             expression: extended_reg_exp
+0:2 - 0:5               ere_branch
+0:2 - 0:5                 ere_expression
+0:2 - 0:3                   "("
+0:3 - 0:4                   expression: extended_reg_exp
+0:3 - 0:4                     ere_branch
+0:3 - 0:4                       ere_expression
+0:3 - 0:4                         one_char_or_coll_elem_ere
+0:3 - 0:4                           ordinary_character `a`
+0:4 - 0:5                   ")"
+0:5 - 0:6             middle: delimiter `/`
+0:6 - 0:7             replacement: replacement
+0:6 - 0:7               replacement_literal `x`
+0:7 - 0:8             closing: delimiter `/`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
+==================
+An empty trailing alternative has no invented branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/a|/p
+------------------
+
+0:0 - 0:5   script
+0:0 - 0:5     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: extended_reg_exp
+0:1 - 0:2                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:3                 "|"
+0:3 - 0:3                 issue: syntax_issue
+0:3 - 0:3                   undefined_syntax
+0:3 - 0:3                     empty_alternative
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+
+==================
+An empty leading alternative has no invented branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/|a/p
+------------------
+
+0:0 - 0:5   script
+0:0 - 0:5     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: extended_reg_exp
+0:1 - 0:1                 issue: syntax_issue
+0:1 - 0:1                   undefined_syntax
+0:1 - 0:1                     empty_alternative
+0:1 - 0:2                 "|"
+0:2 - 0:3                 ere_branch
+0:2 - 0:3                   ere_expression
+0:2 - 0:3                     one_char_or_coll_elem_ere
+0:2 - 0:3                       ordinary_character `a`
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+
+==================
+An empty grouped leading alternative has no invented branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(|a)/p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:5                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:4                     expression: extended_reg_exp
+0:2 - 0:2                       issue: syntax_issue
+0:2 - 0:2                         undefined_syntax
+0:2 - 0:2                           empty_alternative
+0:2 - 0:3                       "|"
+0:3 - 0:4                       ere_branch
+0:3 - 0:4                         ere_expression
+0:3 - 0:4                           one_char_or_coll_elem_ere
+0:3 - 0:4                             ordinary_character `a`
+0:4 - 0:5                     ")"
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+An empty grouped trailing alternative has no invented branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(a|)/p
+------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:5                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:4                     expression: extended_reg_exp
+0:2 - 0:3                       ere_branch
+0:2 - 0:3                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:4                       "|"
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         undefined_syntax
+0:4 - 0:4                           empty_alternative
+0:4 - 0:5                     ")"
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
+==================
+An empty two grouped alternative has no invented branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(|)/p
+------------------
+
+0:0 - 0:6   script
+0:0 - 0:6     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:5           first: address
+0:0 - 0:5             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:4                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:3                     expression: extended_reg_exp
+0:2 - 0:2                       issue: syntax_issue
+0:2 - 0:2                         undefined_syntax
+0:2 - 0:2                           empty_alternative
+0:2 - 0:3                       "|"
+0:3 - 0:3                       issue: syntax_issue
+0:3 - 0:3                         undefined_syntax
+0:3 - 0:3                           empty_alternative
+0:3 - 0:4                     ")"
+0:4 - 0:5               closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+
+==================
+An empty middle alternative has no invented branch (ERE)
+:language(posix_sed_ere)
+:cst
+==================
+/(a||b)/p
+------------------
+
+0:0 - 0:9   script
+0:0 - 0:9     command_list
+0:0 - 0:9       editing_command
+0:0 - 0:8         addresses: address_clause
+0:0 - 0:8           first: address
+0:0 - 0:8             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:7               expression: extended_reg_exp
+0:1 - 0:7                 ere_branch
+0:1 - 0:7                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:6                     expression: extended_reg_exp
+0:2 - 0:3                       ere_branch
+0:2 - 0:3                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:4                       "|"
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         undefined_syntax
+0:4 - 0:4                           empty_alternative
+0:4 - 0:5                       "|"
+0:5 - 0:6                       ere_branch
+0:5 - 0:6                         ere_expression
+0:5 - 0:6                           one_char_or_coll_elem_ere
+0:5 - 0:6                             ordinary_character `b`
+0:6 - 0:7                     ")"
+0:7 - 0:8               closing: delimiter `/`
+0:8 - 0:9         function: function
+0:8 - 0:9           print_function
+0:8 - 0:9             verb: function_verb `p`

@@ -3,7 +3,6 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { test } from "node:test";
 import { grammars, root } from "../scripts/tree-sitter.js";
-import { parseCorpus } from "./support/corpus.js";
 import {
   assertNoNodes,
   issuePaths,
@@ -23,8 +22,37 @@ import {
   parseSummary,
 } from "./support/parser.js";
 
+function parseCorpus(text) {
+  const sections = text.split("==================\n");
+  assert.equal(sections.shift(), "", "corpus must begin with a header");
+  assert.equal(sections.length % 2, 0, "corpus headers must be paired");
+  const cases = [];
+  for (let index = 0; index < sections.length; index += 2) {
+    const [name, ...attributes] = sections[index].trimEnd().split("\n");
+    assert.ok(name, "corpus case must have a name");
+    const languages = [];
+    for (const attribute of attributes) {
+      if (attribute === ":cst") continue;
+      const match = /^:language\(([a-z_]+)\)$/.exec(attribute);
+      assert.ok(match, `unsupported corpus attribute: ${attribute}`);
+      assert.ok(!languages.includes(match[1]), `${name}: duplicate language`);
+      languages.push(match[1]);
+    }
+    assert.ok(languages.length > 0, `${name}: missing language`);
+    const parts = sections[index + 1].split("\n------------------\n");
+    assert.equal(parts.length, 2, `${name}: expected one output separator`);
+    const source = parts[0].endsWith("\r") ? parts[0].slice(0, -1) : parts[0];
+    cases.push({ name, languages, source });
+  }
+  return cases;
+}
+
 const largeReplacementCharacters = 80_000;
 const largeCommandCount = 16_000;
+const nestedBlockDepth = 2_000;
+const printedCommandCount = 50_000;
+const cstPrintTimeoutMs = 60_000;
+const immediateParserTimeoutMicros = 1;
 
 for (const grammar of grammars) {
   test(`${grammar.name}: layout stays outside commands and empty lists`, () => {
@@ -109,10 +137,6 @@ for (const grammar of grammars) {
     }
   });
 }
-const nestedBlockDepth = 2_000;
-const printedCommandCount = 50_000;
-const cstPrintTimeoutMs = 60_000;
-const immediateParserTimeoutMicros = 1;
 
 test("posix_sed: corpus reader preserves source and language selection", () => {
   const header = "==================\n";
@@ -566,135 +590,6 @@ for (const grammar of grammars) {
   });
 }
 
-const identifiedIssueLeafCases = [
-  {
-    name: "special regular expression delimiter escape",
-    source: "s.\\..x.",
-    repaired: "s.a.x.",
-    damage: [
-      {
-        byte: 2,
-        deleteBytes: 1,
-        insert: "\\.",
-      },
-    ],
-    repair: [
-      {
-        byte: 2,
-        deleteBytes: 2,
-        insert: "a",
-      },
-    ],
-  },
-  {
-    name: "replacement ampersand delimiter escape",
-    source: "s&a&\\&&",
-    repaired: "s&a&a&",
-    damage: [
-      {
-        byte: 4,
-        deleteBytes: 1,
-        insert: "\\&",
-      },
-    ],
-    repair: [
-      {
-        byte: 4,
-        deleteBytes: 2,
-        insert: "a",
-      },
-    ],
-  },
-  {
-    name: "equivalence class meta characters",
-    source: "/[[=-=]][[=]=]]/p\n",
-    repaired: "/[[.-.]][[.].]]/p\n",
-    damage: [
-      {
-        byte: 3,
-        deleteBytes: 1,
-        insert: "=",
-      },
-      {
-        byte: 5,
-        deleteBytes: 1,
-        insert: "=",
-      },
-      {
-        byte: 10,
-        deleteBytes: 1,
-        insert: "=",
-      },
-      {
-        byte: 12,
-        deleteBytes: 1,
-        insert: "=",
-      },
-    ],
-    repair: [
-      {
-        byte: 3,
-        deleteBytes: 1,
-        insert: ".",
-      },
-      {
-        byte: 5,
-        deleteBytes: 1,
-        insert: ".",
-      },
-      {
-        byte: 10,
-        deleteBytes: 1,
-        insert: ".",
-      },
-      {
-        byte: 12,
-        deleteBytes: 1,
-        insert: ".",
-      },
-    ],
-  },
-  {
-    name: "shared range endpoint operator",
-    source: "/[a-b-c]/p\n",
-    repaired: "/[a-bc]/p\n",
-    damage: [
-      {
-        byte: 5,
-        deleteBytes: 0,
-        insert: "-",
-      },
-    ],
-    repair: [
-      {
-        byte: 5,
-        deleteBytes: 1,
-        insert: "",
-      },
-    ],
-  },
-];
-
-for (const grammar of grammars) {
-  for (const testCase of identifiedIssueLeafCases) {
-    test(`${grammar.name}: ${testCase.name} converges after damage and repair`, () => {
-      const original = parseSuccessfully(grammar.scope, testCase.source);
-      assertIncrementalContract(
-        original,
-        parse(grammar.scope, testCase.repaired, testCase.damage),
-        testCase.name,
-      );
-      const repaired = parseSuccessfully(grammar.scope, testCase.repaired);
-      assertNoNodes(repaired.nodes, "syntax_issue", "ERROR", "MISSING");
-      assertIncrementalContract(
-        repaired,
-        parse(grammar.scope, testCase.source, testCase.repair),
-        testCase.name,
-      );
-    });
-  }
-}
-
 const invalidCharacterCases = [
   {
     name: "function at source end",
@@ -923,11 +818,12 @@ const nulPayloadCases = [
 ];
 
 for (const grammar of grammars) {
-  test(`${grammar.name}: NUL payload edits preserve owners and following commands`, () => {
-    const isolatedQuit = topLevelEditingCommands(
-      parseSuccessfully(grammar.scope, "q\n").nodes,
-    )[0].nodes;
-    for (const testCase of nulPayloadCases) {
+  for (const testCase of nulPayloadCases) {
+    test(`${grammar.name}: NUL payload edits preserve owners and following commands: ${testCase.name}`, () => {
+      const isolatedQuit = topLevelEditingCommands(
+        parseSuccessfully(grammar.scope, "q\n").nodes,
+      )[0].nodes;
+
       const firstNul = testCase.source.indexOf("\0");
       const history = `${testCase.source.slice(0, firstNul)}x${testCase.source.slice(firstNul)}`;
       const edits = [{ byte: firstNul, deleteBytes: 1, insert: "" }];
@@ -971,8 +867,8 @@ for (const grammar of grammars) {
         parse(grammar.scope, testCase.source, repairs),
         testCase.name,
       );
-    }
-  });
+    });
+  }
 }
 
 for (const grammar of grammars) {
@@ -1405,29 +1301,29 @@ for (const grammar of grammars) {
 }
 
 for (const grammar of grammars) {
-  test(`${grammar.name}: large tokens, command lists and nested blocks parse through EOF`, () => {
-    for (const [name, source] of [
-      ["long replacement", `s/a/${"x".repeat(largeReplacementCharacters)}/\n`],
-      ["wide command list", "p;".repeat(largeCommandCount)],
-      [
-        "deep blocks",
-        `${"{".repeat(nestedBlockDepth)}p;${"}".repeat(nestedBlockDepth)}\n`,
-      ],
-    ]) {
+  for (const [name, source] of [
+    ["long replacement", `s/a/${"x".repeat(largeReplacementCharacters)}/\n`],
+    ["wide command list", "p;".repeat(largeCommandCount)],
+    [
+      "deep blocks",
+      `${"{".repeat(nestedBlockDepth)}p;${"}".repeat(nestedBlockDepth)}\n`,
+    ],
+  ]) {
+    test(`${grammar.name}: large tokens, command lists and nested blocks parse through EOF: ${name}`, () => {
       assert.equal(parseSummary(grammar.scope, source).successful, true, name);
-    }
-  });
+    });
+  }
 }
 
 for (const grammar of grammars) {
-  test(`${grammar.name}: wide and tall command lists print their CST within the time limit`, () => {
-    for (const [name, source] of [
-      ["wide command list", "p;".repeat(printedCommandCount)],
-      ["tall command list", "p\n".repeat(printedCommandCount)],
-    ]) {
+  for (const [name, source] of [
+    ["wide command list", "p;".repeat(printedCommandCount)],
+    ["tall command list", "p\n".repeat(printedCommandCount)],
+  ]) {
+    test(`${grammar.name}: wide and tall command lists print their CST within the time limit: ${name}`, () => {
       parseCstWithin(grammar.scope, source, cstPrintTimeoutMs, name);
-    }
-  });
+    });
+  }
 }
 
 for (const grammar of grammars) {

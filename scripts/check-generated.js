@@ -150,13 +150,9 @@ function main(arguments_) {
 
     let failed = false;
     const stale = [];
-    if (
-      different(
-        join(generatedRoot, "common/tokens.h"),
-        join(root, "common/tokens.h"),
-      )
-    )
-      stale.push("common/tokens.h");
+    const tokenHeader = join("common", "tokens.h");
+    if (different(join(generatedRoot, tokenHeader), join(root, tokenHeader)))
+      stale.push(tokenHeader);
     for (const grammar of grammars) {
       const generatedDirectory = join(generatedRoot, grammar.path, "src");
       const actualPaths = listFiles(generatedDirectory);
