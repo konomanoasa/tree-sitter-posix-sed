@@ -9,15 +9,15 @@ POSIX.1-2024 sed.
 
 For GNU sed, see [tree-sitter-sed](https://github.com/konomanoasa/tree-sitter-sed).
 
+## Parsing Option
+
+For POSIX ERE parsing, use `posix_sed_ere`.
+
 ## Installation
 
 ```sh
 npm install @konomanoasa/tree-sitter-posix-sed
 ```
-
-## Parsing Option
-
-For POSIX ERE parsing, use `posix_sed_ere`.
 
 ## Development
 
@@ -31,6 +31,10 @@ npm test
 
 - [POSIX.1-2024 sed](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/utilities/sed.html)
 - [POSIX.1-2024 regular expressions](https://pubs.opengroup.org/onlinepubs/9799919799.2024edition/basedefs/V1_chap09.html)
+
+## Used By
+
+[sed-ts-mode](https://github.com/konomanoasa/sed-ts-mode)
 
 ## License
 

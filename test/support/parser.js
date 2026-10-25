@@ -176,6 +176,37 @@ function parseSummary(scope, source, timeoutMicros = summaryTimeoutMicros) {
   return summary;
 }
 
+function lexedTokensAfterEdits(scope, source, edits) {
+  const sourcePath = join(temporaryDirectory, `log-${fixtureNumber++}.sed`);
+  writeFileSync(sourcePath, source);
+  const result = treeSitter.run(
+    [
+      "parse",
+      "--encoding",
+      "utf8",
+      "--scope",
+      scope,
+      "--quiet",
+      "--debug=normal",
+      sourcePath,
+      "--edits",
+      ...edits.map(formatEdit),
+    ],
+    {
+      encoding: "utf8",
+      maxBuffer: parserOutputLimitBytes,
+      timeout: parserTimeoutMs,
+    },
+  );
+  assert.ifError(result.error);
+  assert.ok(result.status === 0 || result.status === 1, result.stderr);
+  const start = result.stderr.lastIndexOf("parse_after_edit\n");
+  assert.notEqual(start, -1, "parser logged no incremental parse");
+  const lexed = result.stderr.slice(start).match(/^lexed_lookahead /gm);
+  assert.ok(lexed, "parser logged no lexed token");
+  return lexed.length;
+}
+
 function parseCstWithin(scope, source, timeoutMs, context) {
   const sourcePath = join(temporaryDirectory, `cst-${fixtureNumber++}.sed`);
   writeFileSync(sourcePath, source);
@@ -194,6 +225,7 @@ function parseCstWithin(scope, source, timeoutMs, context) {
 export {
   applyEdits,
   assertIncrementalContract,
+  lexedTokensAfterEdits,
   parse,
   parseCstWithin,
   parseSuccessfully,

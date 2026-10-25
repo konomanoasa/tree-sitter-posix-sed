@@ -164,7 +164,12 @@ static unsigned sed_scanner_serialize(void *payload, char *buffer) {
   buffer[14] = (char)state->regex_bracket_first_element;
   buffer[15] = (char)state->regex_bracket_last_element;
   buffer[16] = (char)state->regex_bracket_element_count;
-  return SCANNER_SERIALIZED_STATE_SIZE;
+  // The default state must equal the empty state before the first external
+  // token, or reuse fails after an edit that adds or removes external tokens.
+  for (unsigned index = 0; index < SCANNER_SERIALIZED_STATE_SIZE; index++) {
+    if (buffer[index] != 0) return SCANNER_SERIALIZED_STATE_SIZE;
+  }
+  return 0;
 }
 
 static void

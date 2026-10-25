@@ -7,16 +7,12 @@ unsafe extern "C" {
 
 pub const LANGUAGE: LanguageFn =
   unsafe { LanguageFn::from_raw(tree_sitter_posix_sed) };
+pub const NODE_TYPES: &str = include_str!("../../src/node-types.json");
+pub const HIGHLIGHTS_QUERY: &str = include_str!("../../queries/highlights.scm");
 
 pub const LANGUAGE_ERE: LanguageFn =
   unsafe { LanguageFn::from_raw(tree_sitter_posix_sed_ere) };
-
-pub const NODE_TYPES: &str = include_str!("../../src/node-types.json");
-
 pub const NODE_TYPES_ERE: &str =
   include_str!("../../posix_sed_ere/src/node-types.json");
-
-pub const HIGHLIGHTS_QUERY: &str = include_str!("../../queries/highlights.scm");
-
 pub const HIGHLIGHTS_QUERY_ERE: &str =
   include_str!("../../posix_sed_ere/queries/highlights.scm");

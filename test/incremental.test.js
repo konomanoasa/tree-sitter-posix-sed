@@ -5,6 +5,7 @@ import { issuePaths, topLevelEditingCommands } from "./support/cst.js";
 import {
   applyEdits,
   assertIncrementalContract,
+  lexedTokensAfterEdits,
   parse,
   parseSuccessfully,
 } from "./support/parser.js";
@@ -260,6 +261,67 @@ for (const grammar of grammars) {
           );
         }
       }
+    });
+  }
+}
+
+const printLine = "p\n";
+const followingLineCounts = [100, 200];
+const reuseCases = [
+  {
+    name: "an empty line inserted between print commands",
+    leadingLines: 10,
+    removed: "",
+    inserted: "\n",
+  },
+  {
+    name: "a substitute command inserted between print commands",
+    leadingLines: 10,
+    removed: "",
+    inserted: "s/a/b/\n",
+  },
+  {
+    name: "a substitute command deleted between print commands",
+    leadingLines: 10,
+    removed: "s/a/b/\n",
+    inserted: "",
+  },
+  {
+    name: "#n inserted before print commands",
+    leadingLines: 0,
+    removed: "",
+    inserted: "#n\n",
+  },
+  {
+    name: "#n deleted before print commands",
+    leadingLines: 0,
+    removed: "#n\n",
+    inserted: "",
+  },
+];
+
+for (const grammar of grammars) {
+  for (const testCase of reuseCases) {
+    test(`${grammar.name}: ${testCase.name} re-lexes no following command`, () => {
+      const leading = printLine.repeat(testCase.leadingLines);
+      const counts = followingLineCounts.map((lines) =>
+        lexedTokensAfterEdits(
+          grammar.scope,
+          leading + testCase.removed + printLine.repeat(lines),
+          [
+            {
+              byte: leading.length,
+              deleteBytes: testCase.removed.length,
+              insert: testCase.inserted,
+            },
+          ],
+        ),
+      );
+      assert.equal(
+        counts[1],
+        counts[0],
+        `lexed tokens after ${followingLineCounts.join(" and ")} following lines`,
+      );
     });
   }
 }

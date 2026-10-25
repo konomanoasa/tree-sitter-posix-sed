@@ -149,13 +149,14 @@ function main(arguments_) {
     if (generateParsers(generatedRoot) !== 0) return 1;
 
     let failed = false;
-    const tokenHeader = join("common", "tokens.h");
-    const stale = different(
-      join(generatedRoot, tokenHeader),
-      join(root, tokenHeader),
+    const stale = [];
+    if (
+      different(
+        join(generatedRoot, "common/tokens.h"),
+        join(root, "common/tokens.h"),
+      )
     )
-      ? [tokenHeader]
-      : [];
+      stale.push("common/tokens.h");
     for (const grammar of grammars) {
       const generatedDirectory = join(generatedRoot, grammar.path, "src");
       const actualPaths = listFiles(generatedDirectory);

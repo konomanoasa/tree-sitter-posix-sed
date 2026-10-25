@@ -15,11 +15,18 @@ fn main() {
     println!("cargo::rerun-if-changed={}", Path::new(&headers).display());
   }
 
-  for (directory, library) in [
+  let grammars = [
     ("src", "tree-sitter-posix-sed"),
     ("posix_sed_ere/src", "tree-sitter-posix-sed-ere"),
-  ] {
+  ];
+  for (directory, _) in grammars {
     println!("cargo::rerun-if-changed={directory}");
+  }
+  for header in ["common/scanner.h", "common/tokens.h"] {
+    println!("cargo::rerun-if-changed={header}");
+  }
+
+  for (directory, library) in grammars {
     let directory = Path::new(directory);
     build
       .clone()
@@ -27,6 +34,4 @@ fn main() {
       .files([directory.join("parser.c"), directory.join("scanner.c")])
       .compile(library);
   }
-  println!("cargo::rerun-if-changed=common/scanner.h");
-  println!("cargo::rerun-if-changed=common/tokens.h");
 }

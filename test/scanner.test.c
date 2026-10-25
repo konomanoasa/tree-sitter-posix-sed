@@ -143,27 +143,33 @@ static ScannerState make_regex_state(void) {
   };
 }
 
-static void serialize_state(
+static unsigned serialize_state(
   ScannerState *state,
   char buffer[TREE_SITTER_SERIALIZATION_BUFFER_SIZE]
 ) {
   char guarded[TREE_SITTER_SERIALIZATION_BUFFER_SIZE + 2];
   memset(guarded, SERIALIZATION_GUARD_BYTE, sizeof(guarded));
   const unsigned length = sed_scanner_serialize(state, guarded + 1);
-  assert(length == SCANNER_SERIALIZED_STATE_SIZE);
+  assert(length == 0 || length == SCANNER_SERIALIZED_STATE_SIZE);
   assert(length <= TREE_SITTER_SERIALIZATION_BUFFER_SIZE);
   assert(guarded[0] == SERIALIZATION_GUARD_BYTE);
-  for (size_t index = length + 1; index < sizeof(guarded); index++) {
+  for (
+    size_t index = SCANNER_SERIALIZED_STATE_SIZE + 1; index < sizeof(guarded);
+    index++
+  ) {
     assert(guarded[index] == SERIALIZATION_GUARD_BYTE);
   }
+  memset(buffer, 0, SCANNER_SERIALIZED_STATE_SIZE);
   memcpy(buffer, guarded + 1, length);
+  return length;
 }
 
 static void assert_same_state(ScannerState *expected, ScannerState *actual) {
   char expected_buffer[TREE_SITTER_SERIALIZATION_BUFFER_SIZE] = {0};
   char actual_buffer[TREE_SITTER_SERIALIZATION_BUFFER_SIZE] = {0};
-  serialize_state(expected, expected_buffer);
-  serialize_state(actual, actual_buffer);
+  const unsigned expected_length = serialize_state(expected, expected_buffer);
+  const unsigned actual_length = serialize_state(actual, actual_buffer);
+  assert(expected_length == actual_length);
   assert(
     memcmp(expected_buffer, actual_buffer, SCANNER_SERIALIZED_STATE_SIZE) == 0
   );
@@ -212,6 +218,28 @@ static void test_empty_serialization_resets_state(void) {
   ScannerState state = make_regex_state();
   sed_scanner_deserialize(&state, NULL, 0);
   assert_reset_state(&state);
+}
+
+static void test_only_the_default_state_serializes_empty(void) {
+  static const ScannerState changed_states[] = {
+    {.mode = MODE_TEXT},
+    {.regex_position = REGEX_AT_BRANCH_START},
+    {.text_line_has_content = true},
+    {.delimiter = INT32_C(0x1f642)},
+    {.regex_group_depth = UINT32_C(1) << 24},
+    {.regex_bracket_element_count = 1},
+  };
+  ScannerState state = {0};
+  char buffer[TREE_SITTER_SERIALIZATION_BUFFER_SIZE] = {0};
+  assert(serialize_state(&state, buffer) == 0);
+  for (
+    size_t index = 0;
+    index < sizeof(changed_states) / sizeof(changed_states[0]);
+    index++
+  ) {
+    state = changed_states[index];
+    assert(serialize_state(&state, buffer) == SCANNER_SERIALIZED_STATE_SIZE);
+  }
 }
 
 static void test_bracket_content_serialization_round_trip(void) {
@@ -795,6 +823,7 @@ int main(void) {
   test_lifecycle();
   test_serialization_round_trip();
   test_empty_serialization_resets_state();
+  test_only_the_default_state_serializes_empty();
   test_bracket_content_serialization_round_trip();
   test_disabled_and_all_valid_scans_preserve_state();
   test_encoding_issues_preserve_construct_state();
