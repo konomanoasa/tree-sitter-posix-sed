@@ -653,7 +653,7 @@ const explicitConvergenceCases = [
     ],
   },
   ...grammars.map((grammar) => ({
-    name: `flags after write remain deterministic`,
+    name: `flag-like write file contents remain deterministic`,
     scope: grammar.scope,
     source: "s/a/b/wp file\n",
     histories: [
@@ -668,7 +668,7 @@ const explicitConvergenceCases = [
     ],
   })),
   ...grammars.map((grammar) => ({
-    name: `command after write remains deterministic`,
+    name: `semicolon text inside a write file remains deterministic`,
     scope: grammar.scope,
     source: "s/a/b/w file;p\n",
     histories: [
@@ -866,6 +866,52 @@ for (const testCase of explicitConvergenceCases) {
         fresh,
         parse(testCase.scope, history.source, history.edits),
         testCase.name,
+      );
+    }
+  });
+}
+
+for (const grammar of grammars) {
+  test(`${grammar.name}: editing encoded characters updates regex roles and host boundaries`, () => {
+    for (const { source, edit } of [
+      {
+        source: String.raw`/a\x2a/p`,
+        edit: { byte: 4, deleteBytes: 2, insert: "5b" },
+      },
+      {
+        source: String.raw`/a\x7b\x32\x7d/p`,
+        edit: { byte: 8, deleteBytes: 2, insert: "71" },
+      },
+      {
+        source: String.raw`/a\x5c+/p`,
+        edit: { byte: 4, deleteBytes: 2, insert: "41" },
+      },
+      {
+        source: String.raw`s/\c/X/p`,
+        edit: { byte: 3, deleteBytes: 1, insert: "q" },
+      },
+      {
+        source: String.raw`s/\x5b[/X/`,
+        edit: { byte: 6, deleteBytes: 1, insert: "" },
+      },
+      { source: ":a#p", edit: { byte: 2, deleteBytes: 1, insert: " " } },
+    ]) {
+      const changed = applyEdits(source, [edit]);
+      const fresh = parseSuccessfully(grammar.scope, changed);
+      assertIncrementalContract(
+        fresh,
+        parse(grammar.scope, source, [edit]),
+        source,
+      );
+      const undo = {
+        byte: edit.byte,
+        deleteBytes: Buffer.byteLength(edit.insert),
+        insert: source.slice(edit.byte, edit.byte + edit.deleteBytes),
+      };
+      assertIncrementalContract(
+        parseSuccessfully(grammar.scope, source),
+        parse(grammar.scope, changed, [undo]),
+        `${source}: undo`,
       );
     }
   });

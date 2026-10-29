@@ -383,32 +383,38 @@ const invalidEncodingCases = [
     ranges: [],
   },
   ...lineOperandContexts.flatMap((context) =>
-    lineOperandFragments.map((fragment) => ({
-      name: `${context.name}: invalid encoding: ${fragment.name}`,
-      source: Buffer.concat([
-        Buffer.from(context.prefix),
-        Buffer.from(fragment.invalidSource),
-        Buffer.from("\n"),
-      ]),
-      capture: context.capture,
-      ranges: (context.capture === "label"
-        ? (fragment.labelRanges ?? fragment.ranges)
-        : fragment.ranges
-      ).map(([start, end]) => [
-        0,
-        context.prefix.length + start,
-        0,
-        context.prefix.length + end,
-      ]),
-      preservedCaptures: Object.fromEntries(
-        ["keyword", "keyword.modifier"].map((capture) => [
-          capture,
-          context.prefixCaptures
-            .filter(([, , name]) => name === capture)
-            .map(([start, end]) => [0, start, 0, end]),
+    lineOperandFragments
+      .filter(
+        (fragment) =>
+          context.capture !== "label" ||
+          fragment.name !== "whitespace beside an issue",
+      )
+      .map((fragment) => ({
+        name: `${context.name}: invalid encoding: ${fragment.name}`,
+        source: Buffer.concat([
+          Buffer.from(context.prefix),
+          Buffer.from(fragment.invalidSource),
+          Buffer.from("\n"),
         ]),
-      ),
-    })),
+        capture: context.capture,
+        ranges: (context.capture === "label"
+          ? (fragment.labelRanges ?? fragment.ranges)
+          : fragment.ranges
+        ).map(([start, end]) => [
+          0,
+          context.prefix.length + start,
+          0,
+          context.prefix.length + end,
+        ]),
+        preservedCaptures: Object.fromEntries(
+          ["keyword", "keyword.modifier"].map((capture) => [
+            capture,
+            context.prefixCaptures
+              .filter(([, , name]) => name === capture)
+              .map(([start, end]) => [0, start, 0, end]),
+          ]),
+        ),
+      })),
   ),
 ];
 
@@ -453,13 +459,14 @@ for (const grammar of grammars) {
 
 const finalCaptureCases = [
   {
-    name: "label captures survive length and character issues",
+    name: "label captures stop at comments and preserve long Unicode names",
     source: ":abcdefghi\nb a@#$b\nt é\n",
     captures: [
       [0, 1, "keyword"],
       [1, 10, "label"],
       [11, 12, "keyword"],
-      [13, 18, "label"],
+      [13, 15, "label"],
+      [15, 18, "comment"],
       [19, 20, "keyword"],
       [21, 23, "label"],
     ],
@@ -522,18 +529,24 @@ const finalCaptureCases = [
     ],
   },
   ...lineOperandContexts.flatMap((context) =>
-    lineOperandFragments.map((fragment) => ({
-      name: `${context.name}: NUL: ${fragment.name}`,
-      source: `${context.prefix}${fragment.nulSource}\n`,
-      captures: [
-        ...context.prefixCaptures,
-        ...fragment.ranges.map(([start, end]) => [
-          context.prefix.length + start,
-          context.prefix.length + end,
-          context.capture,
-        ]),
-      ],
-    })),
+    lineOperandFragments
+      .filter(
+        (fragment) =>
+          context.capture !== "label" ||
+          fragment.name !== "whitespace beside an issue",
+      )
+      .map((fragment) => ({
+        name: `${context.name}: NUL: ${fragment.name}`,
+        source: `${context.prefix}${fragment.nulSource}\n`,
+        captures: [
+          ...context.prefixCaptures,
+          ...fragment.ranges.map(([start, end]) => [
+            context.prefix.length + start,
+            context.prefix.length + end,
+            context.capture,
+          ]),
+        ],
+      })),
   ),
   {
     name: "substitutions separate patterns, UTF-8 replacements, references and flags",
@@ -560,7 +573,7 @@ const finalCaptureCases = [
     ],
   },
   {
-    name: "write file fragments preserve ordinary and substitution semicolon boundaries",
+    name: "ordinary and substitution write files retain semicolons in path captures",
     source: "w a\u0000b;p\ns/a/b/w c\u0000d;p\n",
     captures: [
       [0, 1, "keyword"],
@@ -574,9 +587,7 @@ const finalCaptureCases = [
       [13, 14, "punctuation.delimiter"],
       [14, 15, "keyword.modifier"],
       [16, 17, "string.special.path"],
-      [18, 19, "string.special.path"],
-      [19, 20, "punctuation.delimiter"],
-      [20, 21, "keyword"],
+      [18, 21, "string.special.path"],
     ],
   },
   {
@@ -677,6 +688,27 @@ const finalCaptureCases = [
       [27, 33, "string.special.path"],
     ],
     languages: ["posix_sed"],
+  },
+  {
+    name: "adopted ordinary RE and replacement escapes receive escape captures",
+    source: "s/\\q/\\q/\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "string.escape"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 7, "string.escape"],
+      [7, 8, "punctuation.delimiter"],
+    ],
+  },
+  {
+    name: "literal and control text escapes receive escape captures",
+    source: "a\\\n\\q\\n\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 3, "punctuation.special"],
+      [3, 7, "string.escape"],
+    ],
   },
   {
     name: "quoted metacharacters retain escape captures",
@@ -903,20 +935,21 @@ const finalCaptureCases = [
     ],
   },
   {
-    name: "BRE implementation-defined escape issues have no captures",
+    name: "BRE additional operators retain operator captures",
     source: "/a*\\|b\\+c\\?\\n/p\n",
     captures: [
       [0, 1, "punctuation.delimiter"],
       [1, 2, "string.regexp"],
-      [2, 3, "operator"],
+      [2, 5, "operator"],
       [5, 6, "string.regexp"],
+      [6, 8, "operator"],
       [8, 9, "string.regexp"],
+      [9, 11, "operator"],
       [11, 13, "string.escape"],
       [13, 14, "punctuation.delimiter"],
       [14, 15, "keyword"],
     ],
     languages: ["posix_sed"],
-    valid: false,
   },
   {
     name: "unmatched BRE closer issues have no captures",
@@ -930,7 +963,7 @@ const finalCaptureCases = [
     valid: false,
   },
   {
-    name: "flags after write retain their identified lexical roles",
+    name: "flag-like text after write receives a file capture",
     source: "s/a/b/wg2 output\n",
     captures: [
       [0, 1, "keyword"],
@@ -939,9 +972,8 @@ const finalCaptureCases = [
       [3, 4, "punctuation.delimiter"],
       [4, 5, "string"],
       [5, 6, "punctuation.delimiter"],
-      [6, 8, "keyword.modifier"],
-      [8, 9, "number"],
-      [10, 16, "string.special.path"],
+      [6, 7, "keyword.modifier"],
+      [7, 16, "string.special.path"],
     ],
     valid: false,
   },

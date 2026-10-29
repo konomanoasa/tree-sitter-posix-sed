@@ -5,10 +5,16 @@
   (translation_escaped_delimiter)
   (quoted_character)
   (replacement_escape)
+  (replacement_case_conversion)
   (sed_newline_escape)
-  (text_backslash_escape)
+  (sed_character_escape)
+  (text_escape)
   (translation_escape)
 ] @string.escape
+
+(sed_boundary_assertion) @operator
+
+(sed_character_class) @character.special
 
 (negation_operator) @operator
 
@@ -136,7 +142,11 @@
   ] @punctuation.bracket)
 
 (bre_dupl_symbol
-  "*" @operator)
+  [
+    "*"
+    "\\+"
+    "\\?"
+  ] @operator)
 
 (bre_dupl_symbol
   "," @punctuation.delimiter)
@@ -162,3 +172,6 @@
   verb: (function_verb) @keyword.directive
   comment: (comment
     suppression: (default_output_suppression)))
+
+(basic_reg_exp
+  "\\|" @operator)

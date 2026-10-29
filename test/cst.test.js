@@ -368,8 +368,6 @@ function checkSourceChildren(nodeTypes, grammar, displayPath) {
   const expectedChildren = [
     ["blanks_after_negation", "blank"],
     ["blanks_around_address_separator", "blank"],
-    ["special_delimiter_escape", "escaped_delimiter"],
-    ["replacement_ampersand_delimiter_escape", "replacement_escaped_delimiter"],
   ];
   for (const reason of [
     "unmatched_interval_close",
@@ -506,6 +504,7 @@ function checkPublicCst(grammar, generatedRoot) {
   for (const node of nodeTypes) {
     if (
       node.named &&
+      !reasons.has(node.type) &&
       /(^_|(^|_)(recovery|control|marker|placeholder)($|_)|_token$)/.test(
         node.type,
       )
@@ -577,7 +576,7 @@ function checkPublicCst(grammar, generatedRoot) {
       "]",
       "^",
       ...(grammar.name === "posix_sed"
-        ? ["\\(", "\\)", "\\{", "\\}"]
+        ? ["\\(", "\\)", "\\+", "\\?", "\\{", "\\|", "\\}"]
         : ["(", ")", "+", "?", "{", "|", "}"]),
     ].sort(),
     `${displayPath}: POSIX regular expression punctuation`,
@@ -788,9 +787,8 @@ const nulPayloadCases = [
     source: "w a\u0000;b\nq\n",
   },
   {
-    name: "substitution write file ends before its semicolon",
-    source: "s/a/b/w \u0000 a;q\n",
-    separatorRange: "[0, 11] - [0, 12]",
+    name: "substitution write file keeps its semicolon after NUL",
+    source: "s/a/b/w \u0000 a;q\nq\n",
   },
   {
     name: "ordinary comment text splits around NUL",
@@ -801,17 +799,17 @@ const nulPayloadCases = [
     source: "#n\u0000a\u0000\nq\n",
   },
   {
-    name: "replacement escape retains its nested NUL issue",
+    name: "replacement escape prefix preserves the following NUL issue",
     source: "s/a/\\\u0000/\nq\n",
     repair: "\\",
   },
   {
-    name: "translation escape retains its nested NUL issue",
+    name: "translation escape prefix preserves the following NUL issue",
     source: "y/\\\u0000/x/\nq\n",
     repair: "\\",
   },
   {
-    name: "text escape retains its nested NUL issue",
+    name: "text escape prefix preserves the following NUL issue",
     source: "a\\\n\\\u0000\nq\n",
     repair: "\\",
   },
@@ -850,18 +848,7 @@ for (const grammar of grammars) {
       );
       const repairedFresh = parseSuccessfully(grammar.scope, repaired);
       assertNoNodes(repairedFresh.nodes, "ERROR", "MISSING");
-      assert.deepEqual(
-        issueSignatures(repairedFresh.nodes),
-        testCase.separatorRange === undefined
-          ? []
-          : [
-              {
-                outcome: "undefined_syntax",
-                reason: "forbidden_command_separator",
-                range: testCase.separatorRange,
-              },
-            ],
-      );
+      assert.deepEqual(issueSignatures(repairedFresh.nodes), []);
       assertIncrementalContract(
         repairedFresh,
         parse(grammar.scope, testCase.source, repairs),
@@ -1122,18 +1109,6 @@ for (const grammar of grammars) {
         reason: "unexpected_command_text",
         outcome: "nonconforming_syntax",
       },
-      {
-        source: "s/a/b/wp",
-        suffix: " file",
-        reason: "omitted_file_separator",
-        outcome: null,
-      },
-      {
-        source: "s/a/b/wp",
-        suffix: "\n",
-        reason: "omitted_file_separator",
-        outcome: "nonconforming_syntax",
-      },
       ...(grammar.name === "posix_sed"
         ? [
             {
@@ -1346,32 +1321,26 @@ for (const grammar of grammars) {
       {
         bytes: [0xa9, 0xf0, 0x9f, 0x98, 0x80],
         invalid: [0, 1],
-        decoded: [1, 5],
       },
       {
         bytes: [0xc3, 0xf0, 0x9f, 0x98, 0x80],
         invalid: [0, 1],
-        decoded: [1, 5],
       },
       {
         bytes: [0xc3, 0xa9, 0x9f, 0x98, 0x80],
         invalid: [2, 5],
-        decoded: [0, 2],
       },
       {
         bytes: [0xc3, 0xa9, 0xf0, 0x98, 0x80],
         invalid: [2, 5],
-        decoded: [0, 2],
       },
       {
         bytes: [0xc3, 0xa9, 0xf0, 0x9f, 0x80],
         invalid: [2, 5],
-        decoded: [0, 2],
       },
       {
         bytes: [0xc3, 0xa9, 0xf0, 0x9f, 0x98],
         invalid: [2, 5],
-        decoded: [0, 2],
       },
     ];
     for (const { source, changed, payloadByte, owner, literal, suffix } of [
@@ -1435,7 +1404,7 @@ for (const grammar of grammars) {
       const prefix = Buffer.from(source).subarray(0, payloadByte);
       for (const [
         removedByte,
-        { bytes, invalid, decoded },
+        { bytes, invalid },
       ] of brokenPayloads.entries()) {
         const edits = [
           { byte: payloadByte + removedByte, deleteBytes: 1, insert: "" },
@@ -1473,16 +1442,7 @@ for (const grammar of grammars) {
                   reason: "invalid_encoding",
                   range: invalid,
                 },
-                ...(owner === "label"
-                  ? [
-                      {
-                        outcome: "unspecified_syntax",
-                        reason: "nonportable_label_character",
-                        range: decoded,
-                      },
-                    ]
-                  : []),
-              ].sort((left, right) => left.range[0] - right.range[0]);
+              ];
               assert.deepEqual(
                 issues,
                 expectedIssues.map(
@@ -1499,19 +1459,7 @@ for (const grammar of grammars) {
             assert.equal(result.status, 0, label);
             assertNoNodes(result.nodes, "ERROR", "MISSING");
             const end = payloadByte + (step === 2 ? 1 : payloadBytes);
-            assert.deepEqual(
-              issues,
-              owner === "label" && step !== 2
-                ? [
-                    {
-                      outcome: "unspecified_syntax",
-                      reason: "nonportable_label_character",
-                      range: `[0, ${payloadByte}] - [0, ${end}]`,
-                    },
-                  ]
-                : [],
-              label,
-            );
+            assert.deepEqual(issues, [], label);
             assert.deepEqual(
               syntaxSignatures(result.nodes, [owner, literal]),
               [

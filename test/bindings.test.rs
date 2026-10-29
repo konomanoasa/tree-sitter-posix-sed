@@ -1,5 +1,9 @@
 use konomanoasa_tree_sitter_posix_sed as grammar;
-use tree_sitter::{InputEdit, Language, Parser, Point, Query, Range, Tree};
+use std::ops::ControlFlow;
+use tree_sitter::{
+  InputEdit, Language, ParseOptions, ParseState, Parser, Point, Query, Range,
+  Tree,
+};
 
 fn issue_signatures(tree: &Tree) -> Vec<(String, String, Range)> {
   let mut issues = Vec::new();
@@ -19,6 +23,26 @@ fn issue_signatures(tree: &Tree) -> Vec<(String, String, Range)> {
     }
   }
   issues
+}
+
+fn fielded_nodes(
+  tree: &Tree,
+) -> Vec<(Option<&str>, &str, std::ops::Range<usize>)> {
+  let mut nodes = Vec::new();
+  let mut cursor = tree.walk();
+  'walk: loop {
+    let node = cursor.node();
+    nodes.push((cursor.field_name(), node.kind(), node.byte_range()));
+    if cursor.goto_first_child() {
+      continue;
+    }
+    while !cursor.goto_next_sibling() {
+      if !cursor.goto_parent() {
+        break 'walk;
+      }
+    }
+  }
+  nodes
 }
 
 fn assert_invalid_encoding_leaves(
@@ -530,7 +554,7 @@ fn decoding_issues_split_operands_and_escapes_and_disappear_after_repair() {
         5,
         1,
         2,
-        ("text_backslash_escape", None),
+        ("text_escape", None),
         false,
       ),
       (
@@ -675,19 +699,6 @@ fn decoding_issues_split_operands_and_escapes_and_disappear_after_repair() {
                 )
               })
               .collect()
-          } else if owner_kind == Some("label")
-            && replacement == "\u{fffd}".as_bytes()
-          {
-            vec![(
-              "unspecified_syntax".to_owned(),
-              "nonportable_label_character".to_owned(),
-              Range {
-                start_byte: start,
-                end_byte: start + replacement.len(),
-                start_point: Point::new(row, column),
-                end_point: Point::new(row, column + replacement.len()),
-              },
-            )]
           } else {
             Vec::new()
           };
@@ -1005,34 +1016,82 @@ fn balanced_regex_groups_preserve_depth_across_the_16_bit_boundary() {
 }
 
 #[test]
-fn label_portability_uses_decoded_characters_for_utf16_input() {
+fn label_boundaries_use_decoded_characters_for_utf16_input() {
   for language in [grammar::LANGUAGE, grammar::LANGUAGE_ERE] {
     let mut parser = Parser::new();
     parser.set_language(&language.into()).unwrap();
-    for (source, reason, start, end) in [
-      (":abcdefgh", None, 0, 0),
-      (":abcdefghi", Some("nonportable_label_length"), 2, 20),
-      (":abcdefghi@", Some("nonportable_label_character"), 20, 22),
-      (":ééééé", Some("nonportable_label_character"), 2, 12),
+    for (source, label_end) in [
+      (":abcdefgh", 18),
+      (":abcdefghi", 20),
+      (":abcdefghi@", 22),
+      (":ééééé", 12),
+      (":a#b", 4),
+      (":😀#p", 6),
     ] {
       let input: Vec<_> = source.encode_utf16().collect();
       let tree = parser.parse_utf16_le(&input, None).unwrap();
       assert!(!tree.root_node().has_error(), "{source}");
-      let expected = reason
-        .map(|reason| {
-          vec![(
-            "unspecified_syntax".to_owned(),
-            reason.to_owned(),
-            Range {
-              start_byte: start,
-              end_byte: end,
-              start_point: Point::new(0, start),
-              end_point: Point::new(0, end),
-            },
-          )]
-        })
-        .unwrap_or_default();
-      assert_eq!(issue_signatures(&tree), expected, "{source}");
+      assert!(issue_signatures(&tree).is_empty(), "{source}");
+      let mut cursor = tree.walk();
+      while cursor.node().kind() != "label_literal" {
+        assert!(
+          cursor.goto_first_child() || cursor.goto_next_sibling(),
+          "{source}"
+        );
+      }
+      assert_eq!(cursor.node().byte_range(), 2..label_end, "{source}");
+    }
+  }
+}
+
+#[test]
+fn resumed_parses_keep_operand_fields_after_escaped_invalid_bytes() {
+  let unit: &[u8] = b"\\\xc3\\qa";
+  for (language, mode) in
+    [(grammar::LANGUAGE, "BRE"), (grammar::LANGUAGE_ERE, "ERE")]
+  {
+    let mut parser = Parser::new();
+    parser.set_language(&language.into()).unwrap();
+    for (lines, opening, units, closing) in [
+      (12, &b"a\\\n"[..], 4, &b"\n"[..]),
+      (15, b"y/", 8, b"/cccc/\n"),
+      (45, b"s/x/", 16, b"/\n"),
+    ] {
+      let source =
+        [&b"p\n".repeat(lines), opening, &unit.repeat(units), closing].concat();
+      let context = format!("{mode}, {:?}", String::from_utf8_lossy(&source));
+      let fresh = parser.parse(&source, None).unwrap();
+      assert!(!fresh.root_node().has_error(), "{context}");
+      let expected = fielded_nodes(&fresh);
+      let mut resumed = 0;
+      for cancel_at in 1.. {
+        parser.reset();
+        let mut calls = 0;
+        let mut progress = |_: &ParseState| {
+          calls += 1;
+          if calls == cancel_at {
+            ControlFlow::Break(())
+          } else {
+            ControlFlow::Continue(())
+          }
+        };
+        let completed = parser.parse_with_options(
+          &mut |byte, _| &source[byte.min(source.len())..],
+          None,
+          Some(ParseOptions::new().progress_callback(&mut progress)),
+        );
+        if completed.is_some() {
+          break;
+        }
+        let tree = parser.parse(&source, None).unwrap();
+        assert_eq!(
+          fielded_nodes(&tree),
+          expected,
+          "{context}, cancelled at {cancel_at}"
+        );
+        resumed += 1;
+      }
+      assert!(resumed > 0, "{context}");
     }
   }
 }

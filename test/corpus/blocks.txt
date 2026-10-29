@@ -832,3 +832,32 @@ NUL before a closing brace leaves trailing blank outside the issue
 0:4 - 0:4                 nonconforming_syntax
 0:4 - 0:4                   missing_command_separator
 0:4 - 0:5             closing: closing_brace `}`
+
+==================
+Unexpected text before a missing closing brace leaves trailing blank outside the issue
+:language(posix_sed)
+:language(posix_sed_ere)
+:cst
+==================
+{pq 
+------------------
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         function: function
+0:0 - 0:4           block_function
+0:0 - 0:1             verb: function_verb `{`
+0:1 - 0:3             commands: command_list
+0:1 - 0:3               editing_command
+0:1 - 0:2                 function: function
+0:1 - 0:2                   print_function
+0:1 - 0:2                     verb: function_verb `p`
+0:2 - 0:3                 issue: syntax_issue
+0:2 - 0:3                   nonconforming_syntax
+0:2 - 0:3                     unexpected_command_text `q`
+0:3 - 0:3               issue: syntax_issue
+0:3 - 0:3                 incomplete_syntax
+0:3 - 0:3                   missing_command_separator
+0:4 - 0:4             issue: syntax_issue
+0:4 - 0:4               incomplete_syntax
+0:4 - 0:4                 missing_closing_brace

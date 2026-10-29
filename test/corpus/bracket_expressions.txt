@@ -164,7 +164,7 @@ distinguishes POSIX collating tokens with embedded closing brackets and range en
     (command_separator)))
 
 ==================
-exposes the POSIX ambiguous outer-bracket form
+treats dot-delimited outer brackets as an ordinary list
 :language(posix_sed)
 ==================
 /[.a.]/p
@@ -184,25 +184,22 @@ exposes the POSIX ambiguous outer-bracket form
                   (simple_bre
                     (nondupl_bre
                       (one_char_or_coll_elem_bre
-                        (syntax_issue
-                          (unspecified_syntax
-                            (ambiguous_bracket_expression
-                              (bracket_expression
-                                (matching_list
-                                  (bracket_list
-                                    (follow_list
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single)))))))))))))))))
+                        (bracket_expression
+                          (matching_list
+                            (bracket_list
+                              (follow_list
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))))))))))))
             (delimiter))))
       (function
         (print_function
@@ -3333,7 +3330,7 @@ s/[a-[=b=]]/x/
 0:14 - 0:15         `\n`
 
 ==================
-A regex issue owns its ambiguous bracket expression structure (BRE)
+Dot-delimited outer brackets retain an ordinary list (BRE)
 :language(posix_sed)
 :cst
 ==================
@@ -3354,27 +3351,24 @@ s/[.a.]/x/
 0:2  - 0:7                    simple_bre
 0:2  - 0:7                      nondupl_bre
 0:2  - 0:7                        one_char_or_coll_elem_bre
-0:2  - 0:7                          issue: syntax_issue
-0:2  - 0:7                            unspecified_syntax
-0:2  - 0:7                              ambiguous_bracket_expression
-0:2  - 0:7                                bracket_expression
-0:2  - 0:3                                  "["
-0:3  - 0:6                                  matching_list
-0:3  - 0:6                                    bracket_list
-0:3  - 0:6                                      follow_list
-0:3  - 0:4                                        expression_term
-0:3  - 0:4                                          single_expression
-0:3  - 0:4                                            end_range
-0:3  - 0:4                                              collating_element_single `.`
-0:4  - 0:5                                        expression_term
-0:4  - 0:5                                          single_expression
-0:4  - 0:5                                            end_range
-0:4  - 0:5                                              collating_element_single `a`
-0:5  - 0:6                                        expression_term
-0:5  - 0:6                                          single_expression
-0:5  - 0:6                                            end_range
-0:5  - 0:6                                              collating_element_single `.`
-0:6  - 0:7                                  "]"
+0:2  - 0:7                          bracket_expression
+0:2  - 0:3                            "["
+0:3  - 0:6                            matching_list
+0:3  - 0:6                              bracket_list
+0:3  - 0:6                                follow_list
+0:3  - 0:4                                  expression_term
+0:3  - 0:4                                    single_expression
+0:3  - 0:4                                      end_range
+0:3  - 0:4                                        collating_element_single `.`
+0:4  - 0:5                                  expression_term
+0:4  - 0:5                                    single_expression
+0:4  - 0:5                                      end_range
+0:4  - 0:5                                        collating_element_single `a`
+0:5  - 0:6                                  expression_term
+0:5  - 0:6                                    single_expression
+0:5  - 0:6                                      end_range
+0:5  - 0:6                                        collating_element_single `.`
+0:6  - 0:7                            "]"
 0:7  - 0:8              middle: delimiter `/`
 0:8  - 0:9              replacement: replacement
 0:8  - 0:9                replacement_literal `x`
@@ -3383,7 +3377,7 @@ s/[.a.]/x/
 0:10 - 0:11         `\n`
 
 ==================
-A regex issue owns its ambiguous bracket with a nonportable range structure (BRE)
+An ordinary dot-delimited list retains its nonportable range issue (BRE)
 :language(posix_sed)
 :cst
 ==================
@@ -3404,38 +3398,35 @@ s/[.[=a=]-z.]/x/
 0:2  - 0:13                   simple_bre
 0:2  - 0:13                     nondupl_bre
 0:2  - 0:13                       one_char_or_coll_elem_bre
-0:2  - 0:13                         issue: syntax_issue
-0:2  - 0:13                           unspecified_syntax
-0:2  - 0:13                             ambiguous_bracket_expression
-0:2  - 0:13                               bracket_expression
-0:2  - 0:3                                  "["
-0:3  - 0:12                                 matching_list
-0:3  - 0:12                                   bracket_list
-0:3  - 0:12                                     follow_list
-0:3  - 0:4                                        expression_term
-0:3  - 0:4                                          single_expression
-0:3  - 0:4                                            end_range
-0:3  - 0:4                                              collating_element_single `.`
-0:4  - 0:11                                       expression_term
-0:4  - 0:11                                         range_expression
-0:4  - 0:10                                           start_range
-0:4  - 0:9                                              issue: syntax_issue
-0:4  - 0:9                                                unspecified_syntax
-0:4  - 0:9                                                  equivalence_class_range_start
-0:4  - 0:9                                                    equivalence_class
-0:4  - 0:5                                                      "["
-0:5  - 0:6                                                      "="
-0:6  - 0:7                                                      element: collating_element_single `a`
-0:7  - 0:8                                                      "="
-0:8  - 0:9                                                      "]"
-0:9  - 0:10                                             "-"
-0:10 - 0:11                                           end_range
-0:10 - 0:11                                             collating_element_single `z`
-0:11 - 0:12                                       expression_term
-0:11 - 0:12                                         single_expression
-0:11 - 0:12                                           end_range
-0:11 - 0:12                                             collating_element_single `.`
-0:12 - 0:13                                 "]"
+0:2  - 0:13                         bracket_expression
+0:2  - 0:3                            "["
+0:3  - 0:12                           matching_list
+0:3  - 0:12                             bracket_list
+0:3  - 0:12                               follow_list
+0:3  - 0:4                                  expression_term
+0:3  - 0:4                                    single_expression
+0:3  - 0:4                                      end_range
+0:3  - 0:4                                        collating_element_single `.`
+0:4  - 0:11                                 expression_term
+0:4  - 0:11                                   range_expression
+0:4  - 0:10                                     start_range
+0:4  - 0:9                                        issue: syntax_issue
+0:4  - 0:9                                          unspecified_syntax
+0:4  - 0:9                                            equivalence_class_range_start
+0:4  - 0:9                                              equivalence_class
+0:4  - 0:5                                                "["
+0:5  - 0:6                                                "="
+0:6  - 0:7                                                element: collating_element_single `a`
+0:7  - 0:8                                                "="
+0:8  - 0:9                                                "]"
+0:9  - 0:10                                       "-"
+0:10 - 0:11                                     end_range
+0:10 - 0:11                                       collating_element_single `z`
+0:11 - 0:12                                 expression_term
+0:11 - 0:12                                   single_expression
+0:11 - 0:12                                     end_range
+0:11 - 0:12                                       collating_element_single `.`
+0:12 - 0:13                           "]"
 0:13 - 0:14             middle: delimiter `/`
 0:14 - 0:15             replacement: replacement
 0:14 - 0:15               replacement_literal `x`
@@ -3638,7 +3629,7 @@ s/[a-[=b=]]/x/
 0:14 - 0:15         `\n`
 
 ==================
-A regex issue owns its ambiguous bracket expression structure (ERE)
+Dot-delimited outer brackets retain an ordinary list (ERE)
 :language(posix_sed_ere)
 :cst
 ==================
@@ -3657,27 +3648,24 @@ s/[.a.]/x/
 0:2  - 0:7                ere_branch
 0:2  - 0:7                  ere_expression
 0:2  - 0:7                    one_char_or_coll_elem_ere
-0:2  - 0:7                      issue: syntax_issue
-0:2  - 0:7                        unspecified_syntax
-0:2  - 0:7                          ambiguous_bracket_expression
-0:2  - 0:7                            bracket_expression
-0:2  - 0:3                              "["
-0:3  - 0:6                              matching_list
-0:3  - 0:6                                bracket_list
-0:3  - 0:6                                  follow_list
-0:3  - 0:4                                    expression_term
-0:3  - 0:4                                      single_expression
-0:3  - 0:4                                        end_range
-0:3  - 0:4                                          collating_element_single `.`
-0:4  - 0:5                                    expression_term
-0:4  - 0:5                                      single_expression
-0:4  - 0:5                                        end_range
-0:4  - 0:5                                          collating_element_single `a`
-0:5  - 0:6                                    expression_term
-0:5  - 0:6                                      single_expression
-0:5  - 0:6                                        end_range
-0:5  - 0:6                                          collating_element_single `.`
-0:6  - 0:7                              "]"
+0:2  - 0:7                      bracket_expression
+0:2  - 0:3                        "["
+0:3  - 0:6                        matching_list
+0:3  - 0:6                          bracket_list
+0:3  - 0:6                            follow_list
+0:3  - 0:4                              expression_term
+0:3  - 0:4                                single_expression
+0:3  - 0:4                                  end_range
+0:3  - 0:4                                    collating_element_single `.`
+0:4  - 0:5                              expression_term
+0:4  - 0:5                                single_expression
+0:4  - 0:5                                  end_range
+0:4  - 0:5                                    collating_element_single `a`
+0:5  - 0:6                              expression_term
+0:5  - 0:6                                single_expression
+0:5  - 0:6                                  end_range
+0:5  - 0:6                                    collating_element_single `.`
+0:6  - 0:7                        "]"
 0:7  - 0:8              middle: delimiter `/`
 0:8  - 0:9              replacement: replacement
 0:8  - 0:9                replacement_literal `x`
@@ -3686,7 +3674,7 @@ s/[.a.]/x/
 0:10 - 0:11         `\n`
 
 ==================
-A regex issue owns its ambiguous bracket with a nonportable range structure (ERE)
+An ordinary dot-delimited list retains its nonportable range issue (ERE)
 :language(posix_sed_ere)
 :cst
 ==================
@@ -3705,38 +3693,35 @@ s/[.[=a=]-z.]/x/
 0:2  - 0:13               ere_branch
 0:2  - 0:13                 ere_expression
 0:2  - 0:13                   one_char_or_coll_elem_ere
-0:2  - 0:13                     issue: syntax_issue
-0:2  - 0:13                       unspecified_syntax
-0:2  - 0:13                         ambiguous_bracket_expression
-0:2  - 0:13                           bracket_expression
-0:2  - 0:3                              "["
-0:3  - 0:12                             matching_list
-0:3  - 0:12                               bracket_list
-0:3  - 0:12                                 follow_list
-0:3  - 0:4                                    expression_term
-0:3  - 0:4                                      single_expression
-0:3  - 0:4                                        end_range
-0:3  - 0:4                                          collating_element_single `.`
-0:4  - 0:11                                   expression_term
-0:4  - 0:11                                     range_expression
-0:4  - 0:10                                       start_range
-0:4  - 0:9                                          issue: syntax_issue
-0:4  - 0:9                                            unspecified_syntax
-0:4  - 0:9                                              equivalence_class_range_start
-0:4  - 0:9                                                equivalence_class
-0:4  - 0:5                                                  "["
-0:5  - 0:6                                                  "="
-0:6  - 0:7                                                  element: collating_element_single `a`
-0:7  - 0:8                                                  "="
-0:8  - 0:9                                                  "]"
-0:9  - 0:10                                         "-"
-0:10 - 0:11                                       end_range
-0:10 - 0:11                                         collating_element_single `z`
-0:11 - 0:12                                   expression_term
-0:11 - 0:12                                     single_expression
-0:11 - 0:12                                       end_range
-0:11 - 0:12                                         collating_element_single `.`
-0:12 - 0:13                             "]"
+0:2  - 0:13                     bracket_expression
+0:2  - 0:3                        "["
+0:3  - 0:12                       matching_list
+0:3  - 0:12                         bracket_list
+0:3  - 0:12                           follow_list
+0:3  - 0:4                              expression_term
+0:3  - 0:4                                single_expression
+0:3  - 0:4                                  end_range
+0:3  - 0:4                                    collating_element_single `.`
+0:4  - 0:11                             expression_term
+0:4  - 0:11                               range_expression
+0:4  - 0:10                                 start_range
+0:4  - 0:9                                    issue: syntax_issue
+0:4  - 0:9                                      unspecified_syntax
+0:4  - 0:9                                        equivalence_class_range_start
+0:4  - 0:9                                          equivalence_class
+0:4  - 0:5                                            "["
+0:5  - 0:6                                            "="
+0:6  - 0:7                                            element: collating_element_single `a`
+0:7  - 0:8                                            "="
+0:8  - 0:9                                            "]"
+0:9  - 0:10                                   "-"
+0:10 - 0:11                                 end_range
+0:10 - 0:11                                   collating_element_single `z`
+0:11 - 0:12                             expression_term
+0:11 - 0:12                               single_expression
+0:11 - 0:12                                 end_range
+0:11 - 0:12                                   collating_element_single `.`
+0:12 - 0:13                       "]"
 0:13 - 0:14             middle: delimiter `/`
 0:14 - 0:15             replacement: replacement
 0:14 - 0:15               replacement_literal `x`
@@ -4013,3 +3998,209 @@ A missing class close retains separated name fragments (ERE)
 0:13 - 0:14             verb: function_verb `p`
 0:14 - 1:0        command_separator
 0:14 - 0:15         `\n`
+
+==================
+Equal-delimited outer brackets form an ordinary list (BRE)
+:language(posix_sed)
+==================
+/[=a=]/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (bracket_expression
+                          (matching_list
+                            (bracket_list
+                              (follow_list
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+Colon-delimited outer brackets retain their unresolved classification (BRE)
+:language(posix_sed)
+==================
+/[:alpha:]/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (syntax_issue
+                          (unspecified_syntax
+                            (ambiguous_bracket_expression
+                              (bracket_expression
+                                (matching_list
+                                  (bracket_list
+                                    (follow_list
+                                      (expression_term
+                                        (single_expression
+                                          (end_range
+                                            (collating_element_single))))
+                                      (expression_term
+                                        (single_expression
+                                          (end_range
+                                            (collating_element_single))))
+                                      (expression_term
+                                        (single_expression
+                                          (end_range
+                                            (collating_element_single))))
+                                      (expression_term
+                                        (single_expression
+                                          (end_range
+                                            (collating_element_single))))
+                                      (expression_term
+                                        (single_expression
+                                          (end_range
+                                            (collating_element_single))))
+                                      (expression_term
+                                        (single_expression
+                                          (end_range
+                                            (collating_element_single))))
+                                      (expression_term
+                                        (single_expression
+                                          (end_range
+                                            (collating_element_single)))))))))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+Equal-delimited outer brackets form an ordinary list (ERE)
+:language(posix_sed_ere)
+==================
+/[=a=]/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (bracket_expression
+                      (matching_list
+                        (bracket_list
+                          (follow_list
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
+==================
+Colon-delimited outer brackets retain their unresolved classification (ERE)
+:language(posix_sed_ere)
+==================
+/[:alpha:]/p
+
+------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (syntax_issue
+                      (unspecified_syntax
+                        (ambiguous_bracket_expression
+                          (bracket_expression
+                            (matching_list
+                              (bracket_list
+                                (follow_list
+                                  (expression_term
+                                    (single_expression
+                                      (end_range
+                                        (collating_element_single))))
+                                  (expression_term
+                                    (single_expression
+                                      (end_range
+                                        (collating_element_single))))
+                                  (expression_term
+                                    (single_expression
+                                      (end_range
+                                        (collating_element_single))))
+                                  (expression_term
+                                    (single_expression
+                                      (end_range
+                                        (collating_element_single))))
+                                  (expression_term
+                                    (single_expression
+                                      (end_range
+                                        (collating_element_single))))
+                                  (expression_term
+                                    (single_expression
+                                      (end_range
+                                        (collating_element_single))))
+                                  (expression_term
+                                    (single_expression
+                                      (end_range
+                                        (collating_element_single)))))))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))

@@ -5,10 +5,16 @@
   (translation_escaped_delimiter)
   (quoted_character)
   (replacement_escape)
+  (replacement_case_conversion)
   (sed_newline_escape)
-  (text_backslash_escape)
+  (sed_character_escape)
+  (text_escape)
   (translation_escape)
 ] @string.escape
+
+(sed_boundary_assertion) @operator
+
+(sed_character_class) @character.special
 
 (negation_operator) @operator
 
@@ -42,6 +48,7 @@
 ] @number
 
 [
+  (backreference)
   (matched_text_reference)
   (replacement_backreference)
 ] @string.special.symbol

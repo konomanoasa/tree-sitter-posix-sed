@@ -50,86 +50,24 @@ const verbOperands = {
 const addressPrefixes = ["1 ", "1\t", "1!", "1 !", "$ ", "/x/ ", "\\,x, "];
 
 for (const grammar of grammars) {
-  test(`${grammar.name}: label portability preserves source leaves and limits length checks to portable characters`, () => {
+  test(`${grammar.name}: labels preserve decoded characters and invalid bytes at any length`, () => {
     for (const { label, issues, pieces } of [
       { label: "Ab0._-xy", issues: [], pieces: [[0, 8]] },
-      {
-        label: "abcdefghi",
-        issues: [
-          {
-            outcome: "unspecified_syntax",
-            reason: "nonportable_label_length",
-            start: 0,
-            end: 9,
-          },
-        ],
-        pieces: [[0, 9]],
-      },
-      {
-        label: "a@#$b",
-        issues: [
-          {
-            outcome: "unspecified_syntax",
-            reason: "nonportable_label_character",
-            start: 1,
-            end: 4,
-          },
-        ],
-        pieces: [
-          [0, 1],
-          [1, 4],
-          [4, 5],
-        ],
-      },
+      { label: "abcdefghi", issues: [], pieces: [[0, 9]] },
+      { label: "a".repeat(256), issues: [], pieces: [[0, 256]] },
+      { label: "a@$b", issues: [], pieces: [[0, 4]] },
       {
         label: "é日本語",
-        issues: [
-          {
-            outcome: "unspecified_syntax",
-            reason: "nonportable_label_character",
-            start: 0,
-            end: 11,
-          },
-        ],
+        issues: [],
         pieces: [[0, 11]],
       },
-      {
-        label: "é\uFFFD \\x;\t}",
-        issues: [
-          {
-            outcome: "unspecified_syntax",
-            reason: "nonportable_label_character",
-            start: 0,
-            end: 7,
-          },
-          {
-            outcome: "unspecified_syntax",
-            reason: "nonportable_label_character",
-            start: 8,
-            end: 11,
-          },
-        ],
-        pieces: [
-          [0, 7],
-          [7, 8],
-          [8, 11],
-        ],
-      },
+      { label: "é\uFFFD\\x", issues: [], pieces: [[0, 7]] },
       {
         label: "abcdefghi@",
-        issues: [
-          {
-            outcome: "unspecified_syntax",
-            reason: "nonportable_label_character",
-            start: 9,
-            end: 10,
-          },
-        ],
-        pieces: [
-          [0, 9],
-          [9, 10],
-        ],
+        issues: [],
+        pieces: [[0, 10]],
       },
+      { label: "a\r\v\f@é", issues: [], pieces: [[0, 7]] },
       {
         label: "abcdefghi\0",
         issues: [
@@ -177,25 +115,11 @@ for (const grammar of grammars) {
           pieces,
           source.toString("hex"),
         );
-        for (const [index, node] of result.nodes.entries()) {
-          if (!node.kind.startsWith("nonportable_label_")) continue;
-          assert.deepEqual(
-            result.nodes
-              .filter(({ parent }) => parent === index)
-              .map(({ kind, startByte, endByte }) => [
-                kind,
-                startByte,
-                endByte,
-              ]),
-            [["label_literal", node.startByte, node.endByte]],
-            source.toString("hex"),
-          );
-        }
       }
     }
   });
 
-  test(`${grammar.name}: label length and character classification follow edits to the whole operand`, () => {
+  test(`${grammar.name}: label edits preserve lengths and update comment boundaries`, () => {
     for (const { source, edit, expected } of [
       {
         source: ":abcdefgh",
@@ -209,11 +133,11 @@ for (const grammar of grammars) {
       },
       {
         source: ":abcdefghi",
-        edit: { byte: 10, deleteBytes: 0, insert: "@" },
-        expected: ":abcdefghi@",
+        edit: { byte: 10, deleteBytes: 0, insert: "#" },
+        expected: ":abcdefghi#",
       },
       {
-        source: ":abcdefghi@",
+        source: ":abcdefghi#",
         edit: { byte: 10, deleteBytes: 1, insert: "" },
         expected: ":abcdefghi",
       },
@@ -237,6 +161,72 @@ for (const grammar of grammars) {
         edit: { byte: 11, deleteBytes: 1, insert: "" },
         expected: "t abcdefghi\np",
       },
+    ]) {
+      assert.deepEqual(applyEdits(source, [edit]), Buffer.from(expected));
+      assertIncrementalContract(
+        parseSuccessfully(grammar.scope, expected),
+        parseSuccessfully(grammar.scope, source, [edit]),
+        expected,
+      );
+    }
+  });
+
+  test(`${grammar.name}: edits cross adopted escape and operand boundaries without changing incremental results`, () => {
+    for (const { source, edit, expected } of [
+      {
+        source: "/\\q/p",
+        edit: { byte: 2, deleteBytes: 1, insert: "w" },
+        expected: "/\\w/p",
+      },
+      {
+        source: "/\\w/p",
+        edit: { byte: 2, deleteBytes: 1, insert: "q" },
+        expected: "/\\q/p",
+      },
+      {
+        source: "a\\\n\\q\np",
+        edit: { byte: 4, deleteBytes: 1, insert: "n" },
+        expected: "a\\\n\\n\np",
+      },
+      {
+        source: "s/a/\\q/",
+        edit: { byte: 5, deleteBytes: 1, insert: "U" },
+        expected: "s/a/\\U/",
+      },
+      {
+        source: "s/a/b/wp",
+        edit: { byte: 8, deleteBytes: 0, insert: " file" },
+        expected: "s/a/b/wp file",
+      },
+      {
+        source: "s/a/b/wp",
+        edit: { byte: 8, deleteBytes: 0, insert: "\n" },
+        expected: "s/a/b/wp\n",
+      },
+      {
+        source: "s*a\\**x*",
+        edit: { byte: 5, deleteBytes: 0, insert: "\\*" },
+        expected: "s*a\\*\\**x*",
+      },
+      {
+        source: "s*a\\*\\**x*",
+        edit: { byte: 5, deleteBytes: 2, insert: "" },
+        expected: "s*a\\**x*",
+      },
+      ...(grammar.name === "posix_sed_ere"
+        ? [
+            {
+              source: "s|a\\|b|x|",
+              edit: { byte: 5, deleteBytes: 1, insert: "" },
+              expected: "s|a\\||x|",
+            },
+            {
+              source: "s?a\\??x?",
+              edit: { byte: 3, deleteBytes: 0, insert: "*" },
+              expected: "s?a*\\??x?",
+            },
+          ]
+        : []),
     ]) {
       assert.deepEqual(applyEdits(source, [edit]), Buffer.from(expected));
       assertIncrementalContract(
@@ -2057,4 +2047,289 @@ for (const [name, opening] of [
       }
     }
   });
+}
+
+const unspecifiedEscapeCases = [
+  {
+    name: "labels end before commands, separators, braces and comments",
+    source: "{:a p;b a};#x",
+    nodes: [
+      ["label_literal", 2, 3],
+      ["print_function", 4, 5],
+      ["label_literal", 8, 9],
+      ["closing_brace", 9, 10],
+      ["comment_text", 12, 13],
+    ],
+    absent: ["empty_command"],
+  },
+  {
+    name: "global and occurrence flags coexist in either order",
+    source: "s/a/b/g2;s/a/b/2g",
+    nodes: [
+      ["global_flag", 6, 7],
+      ["occurrence_flag", 7, 8],
+      ["occurrence_flag", 15, 16],
+      ["global_flag", 16, 17],
+    ],
+  },
+  {
+    name: "replacement escape arguments stay in one leaf",
+    source: String.raw`s/a/\x41\o101\d065\cA\x/`,
+    nodes: [
+      ["replacement_escape", 4, 8],
+      ["replacement_escape", 8, 13],
+      ["replacement_escape", 13, 18],
+      ["replacement_escape", 18, 21],
+      ["replacement_escape", 21, 23],
+    ],
+  },
+  {
+    name: "replacement case conversion has a distinct role",
+    source: String.raw`s/a/\L\l\U\u\E/`,
+    nodes: [
+      ["replacement_case_conversion", 4, 6],
+      ["replacement_case_conversion", 6, 8],
+      ["replacement_case_conversion", 8, 10],
+      ["replacement_case_conversion", 10, 12],
+      ["replacement_case_conversion", 12, 14],
+    ],
+  },
+  {
+    name: "translation decodes numeric and control escapes",
+    source: String.raw`y/\x41\cA/\o101\d001/`,
+    nodes: [
+      ["translation_escape", 2, 6],
+      ["translation_escape", 6, 9],
+      ["translation_escape", 10, 15],
+      ["translation_escape", 15, 20],
+    ],
+  },
+  {
+    name: "numeric escapes stop at their digit limit",
+    source: String.raw`s/a/\x414\o1011\d0651/`,
+    nodes: [
+      ["replacement_escape", 4, 8],
+      ["replacement_literal", 8, 9],
+      ["replacement_escape", 9, 14],
+      ["replacement_literal", 14, 15],
+      ["replacement_escape", 15, 20],
+      ["replacement_literal", 20, 21],
+    ],
+  },
+  {
+    name: "word classes and boundaries retain their source roles",
+    source: String.raw`/\b\w\B\W\s\S\<\>/p`,
+    nodes: [
+      ["sed_boundary_assertion", 1, 3],
+      ["sed_character_class", 3, 5],
+      ["sed_boundary_assertion", 5, 7],
+      ["sed_character_class", 7, 9],
+      ["sed_character_class", 9, 11],
+      ["sed_character_class", 11, 13],
+      ["sed_boundary_assertion", 13, 15],
+      ["sed_boundary_assertion", 15, 17],
+    ],
+  },
+  {
+    name: "encoded multiplication retains its duplication owner",
+    source: String.raw`/a\x2a/p`,
+    nodes: [["sed_character_escape", 2, 6]],
+    duplications: ["sed_character_escape"],
+  },
+  {
+    name: "encoded backslash does not run sed escape decoding twice",
+    source: String.raw`/\x5cx41/p`,
+    nodes: [
+      ["sed_character_escape", 1, 6],
+      ["ordinary_character", 6, 7],
+      ["ordinary_character", 7, 8],
+    ],
+  },
+  {
+    name: "control escape may consume a regex delimiter",
+    source: String.raw`s/\c/X/p`,
+    nodes: [
+      ["sed_character_escape", 2, 5],
+      ["replacement_literal", 7, 8],
+    ],
+    issues: ["incomplete_syntax/unterminated_replacement"],
+  },
+  {
+    name: "control escape can quote a delimiter",
+    source: String.raw`/\c\//p`,
+    nodes: [["sed_character_escape", 1, 5]],
+  },
+  {
+    name: "invalid recursive control escape keeps its own issue",
+    source: String.raw`/\c\./p`,
+    nodes: [["invalid_control_escape", 1, 4]],
+    issues: ["invalid_syntax/invalid_control_escape"],
+  },
+  {
+    name: "a control escape at EOF can be completed",
+    source: "/\\c\\",
+    nodes: [["invalid_control_escape", 1, 4]],
+    issues: [
+      "incomplete_syntax/invalid_control_escape",
+      "incomplete_syntax/unterminated_regular_expression",
+      "incomplete_syntax/missing_function",
+    ],
+  },
+  {
+    name: "invalid encoding after control introducer is not a control error",
+    source: Buffer.from("s/a/\\c\xff/", "latin1"),
+    nodes: [
+      ["replacement_escape", 4, 6],
+      ["invalid_encoding", 6, 7],
+    ],
+    issues: ["invalid_syntax/invalid_encoding"],
+  },
+  {
+    name: "text decodes escapes before a completed line",
+    source: "a\\\n\\n\\x41\n",
+    nodes: [
+      ["text_escape", 3, 5],
+      ["text_escape", 5, 9],
+    ],
+  },
+  {
+    name: "dangling text backslash suppresses previous escape decoding",
+    source: "a\\\n\\n\\x41\\",
+    nodes: [
+      ["text_literal", 3, 9],
+      ["text_escape", 9, 10],
+    ],
+  },
+  {
+    name: "raw text keeps its line continuations",
+    source: "a\\\n\\n\\\n\\x41\\",
+    nodes: [
+      ["text_literal", 3, 5],
+      ["text_escaped_newline", 5, 7],
+      ["text_literal", 7, 11],
+      ["text_escape", 11, 12],
+    ],
+  },
+  {
+    name: "a source bracket shields the host delimiter after encoded opening",
+    source: String.raw`s/\x5b[/X/`,
+    nodes: [["sed_character_escape", 2, 6]],
+    issues: [
+      "incomplete_syntax/unclosed_bracket_expression",
+      "incomplete_syntax/unterminated_regular_expression",
+    ],
+  },
+  {
+    name: "colon lists with no name are ordinary brackets",
+    source: "/[:::]/p",
+    nodes: [["bracket_expression", 1, 6]],
+  },
+  {
+    name: "a range inside a colon list is not a misplaced class",
+    source: "/[:a-b:]/p",
+    nodes: [["range_expression", 3, 6]],
+  },
+  {
+    name: "a compound term inside a colon list is not a misplaced class",
+    source: "/[:[.a.]:]/p",
+    nodes: [["collating_symbol", 3, 8]],
+  },
+  {
+    name: "a simple colon name is a misplaced class",
+    source: "/[:a:]/p",
+    nodes: [["ambiguous_bracket_expression", 1, 6]],
+    issues: ["unspecified_syntax/ambiguous_bracket_expression"],
+  },
+  {
+    name: "BRE leading additional duplication is a literal escape",
+    languages: ["posix_sed"],
+    source: String.raw`/\+\?/p`,
+    nodes: [
+      ["sed_character_escape", 1, 3],
+      ["bre_dupl_symbol", 3, 5],
+    ],
+  },
+  {
+    name: "ERE numeric interval parts preserve minimum and maximum fields",
+    languages: ["posix_sed_ere"],
+    source: String.raw`/a\x7b\x32\x2c\x33\x7d/p`,
+    nodes: [
+      ["sed_character_escape", 2, 6],
+      ["sed_character_escape", 6, 10],
+      ["sed_character_escape", 10, 14],
+      ["sed_character_escape", 14, 18],
+      ["sed_character_escape", 18, 22],
+    ],
+    fields: [
+      [6, "minimum"],
+      [14, "maximum"],
+    ],
+  },
+  {
+    name: "ERE backreferences keep their role",
+    languages: ["posix_sed_ere"],
+    source: String.raw`/(a)\1/p`,
+    nodes: [["backreference", 4, 6]],
+  },
+];
+
+for (const grammar of grammars) {
+  for (const fixture of unspecifiedEscapeCases) {
+    if (fixture.languages && !fixture.languages.includes(grammar.name))
+      continue;
+    test(`${grammar.name}: ${fixture.name}`, () => {
+      const parsed = parseSuccessfully(grammar.scope, fixture.source);
+      assert.deepEqual(
+        issuePaths(parsed.nodes),
+        fixture.issues ?? [],
+        fixture.name,
+      );
+      const kinds = new Set(fixture.nodes.map(([kind]) => kind));
+      assert.deepEqual(
+        parsed.nodes
+          .filter((node) => kinds.has(node.kind))
+          .map(({ kind, startByte, endByte }) => [kind, startByte, endByte]),
+        fixture.nodes,
+        fixture.name,
+      );
+      for (const kind of fixture.absent ?? [])
+        assert.ok(!parsed.nodes.some((node) => node.kind === kind), kind);
+      for (const [byte, field] of fixture.fields ?? []) {
+        assert.ok(
+          parsed.nodes.some(
+            (node) =>
+              node.kind === "sed_character_escape" &&
+              node.startByte === byte &&
+              node.field === field,
+          ),
+          `${field} at ${byte}`,
+        );
+      }
+      for (const kind of fixture.duplications ?? []) {
+        const index = parsed.nodes.findIndex((node) => node.kind === kind);
+        assert.equal(
+          parsed.nodes[parsed.nodes[index].parent].kind,
+          grammar.name === "posix_sed" ? "bre_dupl_symbol" : "ere_dupl_symbol",
+        );
+      }
+      // Changing the suffix must invalidate scanner decisions that looked ahead.
+      const bytes = Buffer.from(fixture.source);
+      const withSuffix = Buffer.concat([bytes, Buffer.from("\n")]);
+      assertIncrementalContract(
+        parsed,
+        parse(grammar.scope, withSuffix, [
+          { byte: bytes.length, deleteBytes: 1, insert: "" },
+        ]),
+        fixture.name,
+      );
+      const extended = parseSuccessfully(grammar.scope, withSuffix);
+      assertIncrementalContract(
+        extended,
+        parse(grammar.scope, bytes, [
+          { byte: bytes.length, deleteBytes: 0, insert: "\n" },
+        ]),
+        fixture.name,
+      );
+    });
+  }
 }
