@@ -7,8 +7,6 @@
 [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) grammars for
 POSIX.1-2024 sed.
 
-For GNU sed, see [tree-sitter-sed](https://github.com/konomanoasa/tree-sitter-sed).
-
 ## Installation
 
 ```sh

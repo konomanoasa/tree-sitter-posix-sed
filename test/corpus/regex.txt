@@ -232,22 +232,115 @@ s😺猫😺犬😺g
     (command_separator)))
 
 ==================
-rejects regular expression syntax (BRE): "s)\\(a$\\))x)\n"
+keeps a dollar sign literal before an escaped closing-parenthesis delimiter
 :language(posix_sed)
-:error
 ==================
 s)\(a$\))x)
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (basic_reg_exp
+                      (bre_branch
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (ordinary_character)))))
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (ordinary_character)))))
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (escaped_delimiter)))))))
+                    (syntax_issue
+                      (undefined_syntax
+                        (unclosed_subexpression))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "/\\(^a$\\)\\+b\\?c\\|d/p\n"
+rejects optional BRE anchors while accepting GNU duplication and alternation
 :language(posix_sed)
-:error
 ==================
 /\(^a$\)\+b\?c\|d/p
 
 ------------------
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (basic_reg_exp
+                        (bre_branch
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_left_anchor)))))))
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (ordinary_character)))))
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_right_anchor))))))))))
+                    (bre_dupl_symbol)))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol)))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character))))))
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
 
 ==================
 accepts empty BRE groups without an expression or issue
@@ -276,119 +369,560 @@ accepts empty BRE groups without an expression or issue
     (command_separator)))
 
 ==================
-rejects regular expression syntax (BRE): "/\\{\\}a\\{1\\}/p\n"
+ends a leading empty BRE interval before a following expression
 :language(posix_sed)
-:error
 ==================
 /\{\}a\{1\}/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (syntax_issue
+                      (undefined_syntax
+                        (leading_duplication_symbol
+                          (bre_dupl_symbol
+                            (syntax_issue
+                              (undefined_syntax
+                                (missing_interval_minimum)))))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "s/x*\\{\\}y\\{2\\}/z/\n"
+ends an empty BRE interval after a duplication operator
 :language(posix_sed)
-:error
 ==================
 s/x*\{\}y\{2\}/z/
 
 ------------------
 
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol)
+                  (bre_dupl_symbol
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_minimum))))))
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (duplication_count))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "/\\{3\\}a*\\{2\\}\\}/p\n"
+preserves BRE interval recovery structure
 :language(posix_sed)
-:error
 ==================
 /\{3\}a*\{2\}\}/p
 
 ------------------
 
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (syntax_issue
+                      (undefined_syntax
+                        (leading_duplication_symbol
+                          (bre_dupl_symbol
+                            (duplication_count)))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol)
+                    (bre_dupl_symbol
+                      (duplication_count))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (syntax_issue
+                        (undefined_syntax
+                          (unmatched_interval_close))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "/\\(\\)a\\{1,2,3\\}\\)/p\n"
+classifies malformed BRE interval recovery inside the POSIX hierarchy
 :language(posix_sed)
-:error
 ==================
 /\(\)a\{1,2,3\}\)/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre)))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count)
+                      (duplication_count)
+                      (syntax_issue
+                        (undefined_syntax
+                          (unexpected_interval_separator)))
+                      (duplication_count))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (syntax_issue
+                        (undefined_syntax
+                          (unmatched_subexpression_close))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "/a\\{2,3\\n}/p\n"
+keeps a newline escape inside a malformed BRE interval
 :language(posix_sed)
-:error
 ==================
 /a\{2,3\n}/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count)
+                      (duplication_count)
+                      (syntax_issue
+                        (undefined_syntax
+                          (invalid_interval_character
+                            (sed_character_escape))))
+                      (syntax_issue
+                        (undefined_syntax
+                          (invalid_interval_character)))
+                      (syntax_issue
+                        (undefined_syntax
+                          (missing_interval_close))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "s/b\\{1\\//x/\n"
+keeps a delimiter escape inside a malformed BRE interval
 :language(posix_sed)
-:error
 ==================
 s/b\{1\//x/
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (duplication_count)
+                    (syntax_issue
+                      (undefined_syntax
+                        (invalid_interval_character)))
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_close))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "/\\(^*\\)\\(^\\{1\\}\\)/p\n"
+keeps nonconforming BRE subexpression anchors structured for duplication recovery
 :language(posix_sed)
-:error
 ==================
 /\(^*\)\(^\{1\}\)/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (basic_reg_exp
+                        (bre_branch
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_left_anchor)))))))
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (ordinary_character))))))))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (basic_reg_exp
+                        (bre_branch
+                          (bre_expression
+                            (simple_bre
+                              (nondupl_bre
+                                (one_char_or_coll_elem_bre
+                                  (syntax_issue
+                                    (nonconforming_syntax
+                                      (bre_subexpression_left_anchor)))))))
+                          (bre_expression
+                            (simple_bre
+                              (syntax_issue
+                                (undefined_syntax
+                                  (leading_duplication_symbol
+                                    (bre_dupl_symbol
+                                      (duplication_count))))))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "/a\\{1[bc]\\}/p\n"
+A bracket expression after a malformed interval remains outside it (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /a\{1[bc]\}/p
 
 ------------------
 
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:13       editing_command
+0:0  - 0:12         addresses: address_clause
+0:0  - 0:12           first: address
+0:0  - 0:12             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:11               expression: basic_reg_exp
+0:1  - 0:11                 bre_branch
+0:1  - 0:5                    bre_expression
+0:1  - 0:5                      simple_bre
+0:1  - 0:2                        nondupl_bre
+0:1  - 0:2                          one_char_or_coll_elem_bre
+0:1  - 0:2                            ordinary_character `a`
+0:2  - 0:5                        bre_dupl_symbol
+0:2  - 0:4                          "\\{"
+0:4  - 0:5                          minimum: duplication_count `1`
+0:5  - 0:5                          issue: syntax_issue
+0:5  - 0:5                            undefined_syntax
+0:5  - 0:5                              missing_interval_close
+0:5  - 0:9                    bre_expression
+0:5  - 0:9                      simple_bre
+0:5  - 0:9                        nondupl_bre
+0:5  - 0:9                          one_char_or_coll_elem_bre
+0:5  - 0:9                            bracket_expression
+0:5  - 0:6                              "["
+0:6  - 0:8                              matching_list
+0:6  - 0:8                                bracket_list
+0:6  - 0:8                                  follow_list
+0:6  - 0:7                                    expression_term
+0:6  - 0:7                                      single_expression
+0:6  - 0:7                                        end_range
+0:6  - 0:7                                          collating_element_single `b`
+0:7  - 0:8                                    expression_term
+0:7  - 0:8                                      single_expression
+0:7  - 0:8                                        end_range
+0:7  - 0:8                                          collating_element_single `c`
+0:8  - 0:9                              "]"
+0:9  - 0:11                   bre_expression
+0:9  - 0:11                     simple_bre
+0:9  - 0:11                       nondupl_bre
+0:9  - 0:11                         issue: syntax_issue
+0:9  - 0:11                           undefined_syntax
+0:9  - 0:11                             unmatched_interval_close `\\}`
+0:11 - 0:12               closing: delimiter `/`
+0:12 - 0:13         function: function
+0:12 - 0:13           print_function
+0:12 - 0:13             verb: function_verb `p`
+0:13 - 1:0        command_separator
+0:13 - 0:14         `\n`
+
 ==================
-rejects regular expression syntax (BRE): "/\\(a\\{2\\)/p\n"
+A group closer after a malformed interval remains outside it (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /\(a\{2\)/p
 
 ------------------
 
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:11       editing_command
+0:0  - 0:10         addresses: address_clause
+0:0  - 0:10           first: address
+0:0  - 0:10             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:9                expression: basic_reg_exp
+0:1  - 0:9                  bre_branch
+0:1  - 0:9                    bre_expression
+0:1  - 0:9                      simple_bre
+0:1  - 0:9                        nondupl_bre
+0:1  - 0:3                          "\\("
+0:3  - 0:7                          expression: basic_reg_exp
+0:3  - 0:7                            bre_branch
+0:3  - 0:7                              bre_expression
+0:3  - 0:7                                simple_bre
+0:3  - 0:4                                  nondupl_bre
+0:3  - 0:4                                    one_char_or_coll_elem_bre
+0:3  - 0:4                                      ordinary_character `a`
+0:4  - 0:7                                  bre_dupl_symbol
+0:4  - 0:6                                    "\\{"
+0:6  - 0:7                                    minimum: duplication_count `2`
+0:7  - 0:7                                    issue: syntax_issue
+0:7  - 0:7                                      undefined_syntax
+0:7  - 0:7                                        missing_interval_close
+0:7  - 0:9                          "\\)"
+0:9  - 0:10               closing: delimiter `/`
+0:10 - 0:11         function: function
+0:10 - 0:11           print_function
+0:10 - 0:11             verb: function_verb `p`
+0:11 - 1:0        command_separator
+0:11 - 0:12         `\n`
+
 ==================
-rejects regular expression syntax (BRE): "/a\\{1x\\}/p\n"
+leaves an ordinary character outside a malformed BRE interval
 :language(posix_sed)
-:error
 ==================
 /a\{1x\}/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))
+                    (bre_dupl_symbol
+                      (duplication_count)
+                      (syntax_issue
+                        (undefined_syntax
+                          (invalid_interval_character))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "s.a\\{1[.]b.x.\n"
+keeps the delimiter inside a bracket expression after a malformed BRE interval
 :language(posix_sed)
-:error
 ==================
 s.a\{1[.]b.x.
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (duplication_count)
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_close))))))
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (bracket_expression
+                        (matching_list
+                          (bracket_list
+                            (follow_list
+                              (expression_term
+                                (single_expression
+                                  (end_range
+                                    (collating_element_single))))))))))))
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{\\"
+rejects a BRE interval escape before its mandatory minimum at EOF
 :language(posix_sed)
-:error
 ==================
 s/a\{\
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_minimum)))
+                    (syntax_issue
+                      (incomplete_syntax
+                        (invalid_interval_close))))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
 ==================
-rejects regular expression syntax (BRE): "s)\\(a"
+rejects an unclosed BRE group whose delimiter prevents completion at EOF
 :language(posix_sed)
-:error
 ==================
 s)\(a
 ------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (basic_reg_exp
+                      (bre_branch
+                        (bre_expression
+                          (simple_bre
+                            (nondupl_bre
+                              (one_char_or_coll_elem_bre
+                                (ordinary_character)))))))
+                    (syntax_issue
+                      (undefined_syntax
+                        (unclosed_subexpression))))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
 
 ==================
 recognizes escaped interval comma and count in BRE
@@ -444,38 +978,139 @@ s1a\{\12\}1b1
     (command_separator)))
 
 ==================
-rejects regular expression syntax (BRE): "s/a\\{x\u0000y\\}/z/\n"
+owns a NUL inside a malformed BRE interval
 :language(posix_sed)
-:error
 ==================
 s/a\{x y\}/z/
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (ordinary_character)))
+                  (bre_dupl_symbol
+                    (syntax_issue
+                      (undefined_syntax
+                        (invalid_interval_character)))
+                    (syntax_issue
+                      (invalid_syntax
+                        (invalid_regular_expression_character)))
+                    (syntax_issue
+                      (undefined_syntax
+                        (invalid_interval_character))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "s/\\\u0000/z/\n"
+owns a NUL inside an escaped BRE atom
 :language(posix_sed)
-:error
 ==================
 s/\ /z/
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (syntax_issue
+                        (invalid_syntax
+                          (invalid_regular_expression_character)))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (BRE): "/\\("
+An unfinished empty group has no invented body (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /\(
 ------------------
 
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:3           first: address
+0:0 - 0:3             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         "\\("
+0:3 - 0:3                         issue: syntax_issue
+0:3 - 0:3                           incomplete_syntax
+0:3 - 0:3                             unclosed_subexpression
+0:3 - 0:3               issue: syntax_issue
+0:3 - 0:3                 incomplete_syntax
+0:3 - 0:3                   unterminated_regular_expression
+0:3 - 0:3         issue: syntax_issue
+0:3 - 0:3           incomplete_syntax
+0:3 - 0:3             missing_function
+
 ==================
-rejects regular expression syntax (BRE): "/a\\"
+A final backslash retains its incomplete regular expression escape (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /a\
 ------------------
+
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:3           first: address
+0:0 - 0:3             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:2                   bre_expression
+0:1 - 0:2                     simple_bre
+0:1 - 0:2                       nondupl_bre
+0:1 - 0:2                         one_char_or_coll_elem_bre
+0:1 - 0:2                           ordinary_character `a`
+0:2 - 0:3                   bre_expression
+0:2 - 0:3                     simple_bre
+0:2 - 0:3                       nondupl_bre
+0:2 - 0:3                         one_char_or_coll_elem_bre
+0:2 - 0:3                           issue: syntax_issue
+0:2 - 0:3                             incomplete_syntax
+0:2 - 0:3                               incomplete_regular_expression_escape `\\`
+0:3 - 0:3               issue: syntax_issue
+0:3 - 0:3                 incomplete_syntax
+0:3 - 0:3                   unterminated_regular_expression
+0:3 - 0:3         issue: syntax_issue
+0:3 - 0:3           incomplete_syntax
+0:3 - 0:3             missing_function
 
 ==================
 A quoted character is a direct source leaf (BRE)
@@ -704,76 +1339,319 @@ An empty group between literals remains a group (BRE)
 0:8 - 0:9             verb: function_verb `p`
 
 ==================
-rejects regular expression syntax (BRE): "s/\\("
+A bodyless final substitution group still requires its closer (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/\(
 ------------------
 
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         function: function
+0:0 - 0:4           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: basic_reg_exp
+0:2 - 0:4               bre_branch
+0:2 - 0:4                 bre_expression
+0:2 - 0:4                   simple_bre
+0:2 - 0:4                     nondupl_bre
+0:2 - 0:4                       "\\("
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         incomplete_syntax
+0:4 - 0:4                           unclosed_subexpression
+0:4 - 0:4             issue: syntax_issue
+0:4 - 0:4               incomplete_syntax
+0:4 - 0:4                 unterminated_regular_expression
+
 ==================
-rejects regular expression syntax (BRE): "s/\\(/x/"
+A bodyless substitution group before a delimiter is unclosed (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/\(/x/
 ------------------
 
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:7         function: function
+0:0 - 0:7           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: basic_reg_exp
+0:2 - 0:4               bre_branch
+0:2 - 0:4                 bre_expression
+0:2 - 0:4                   simple_bre
+0:2 - 0:4                     nondupl_bre
+0:2 - 0:4                       "\\("
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         undefined_syntax
+0:4 - 0:4                           unclosed_subexpression
+0:4 - 0:5             middle: delimiter `/`
+0:5 - 0:6             replacement: replacement
+0:5 - 0:6               replacement_literal `x`
+0:6 - 0:7             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{\\}/x/"
+An interval retains empty (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a\{\}/x/
 ------------------
 
+0:0  - 0:10   script
+0:0  - 0:10     command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: basic_reg_exp
+0:2  - 0:7                bre_branch
+0:2  - 0:7                  bre_expression
+0:2  - 0:7                    simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:7                      bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:5                        issue: syntax_issue
+0:5  - 0:5                          undefined_syntax
+0:5  - 0:5                            missing_interval_minimum
+0:5  - 0:7                        "\\}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{\\,\\}/x/"
+An interval retains escaped comma (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a\{\,\}/x/
 ------------------
 
+0:0  - 0:12   script
+0:0  - 0:12     command_list
+0:0  - 0:12       editing_command
+0:0  - 0:12         function: function
+0:0  - 0:12           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:9              expression: basic_reg_exp
+0:2  - 0:9                bre_branch
+0:2  - 0:9                  bre_expression
+0:2  - 0:9                    simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:9                      bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:7                        issue: syntax_issue
+0:5  - 0:7                          undefined_syntax
+0:5  - 0:7                            invalid_interval_character `\\,`
+0:7  - 0:9                        "\\}"
+0:9  - 0:10             middle: delimiter `/`
+0:10 - 0:11             replacement: replacement
+0:10 - 0:11               replacement_literal `x`
+0:11 - 0:12             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{q\\zq\\}/x/"
+An interval retains invalid runs separated by an escape (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a\{q\zq\}/x/
 ------------------
 
+0:0  - 0:14   script
+0:0  - 0:14     command_list
+0:0  - 0:14       editing_command
+0:0  - 0:14         function: function
+0:0  - 0:14           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:11             expression: basic_reg_exp
+0:2  - 0:11               bre_branch
+0:2  - 0:11                 bre_expression
+0:2  - 0:11                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:11                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        issue: syntax_issue
+0:5  - 0:6                          undefined_syntax
+0:5  - 0:6                            invalid_interval_character `q`
+0:6  - 0:8                        issue: syntax_issue
+0:6  - 0:8                          undefined_syntax
+0:6  - 0:8                            invalid_interval_character `\\z`
+0:8  - 0:9                        issue: syntax_issue
+0:8  - 0:9                          undefined_syntax
+0:8  - 0:9                            invalid_interval_character `q`
+0:9  - 0:11                       "\\}"
+0:11 - 0:12             middle: delimiter `/`
+0:12 - 0:13             replacement: replacement
+0:12 - 0:13               replacement_literal `x`
+0:13 - 0:14             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{,2\\}/x/"
+An interval retains omitted minimum (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a\{,2\}/x/
 ------------------
 
+0:0  - 0:12   script
+0:0  - 0:12     command_list
+0:0  - 0:12       editing_command
+0:0  - 0:12         function: function
+0:0  - 0:12           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:9              expression: basic_reg_exp
+0:2  - 0:9                bre_branch
+0:2  - 0:9                  bre_expression
+0:2  - 0:9                    simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:9                      bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:5                        issue: syntax_issue
+0:5  - 0:5                          undefined_syntax
+0:5  - 0:5                            missing_interval_minimum
+0:5  - 0:6                        ","
+0:6  - 0:7                        maximum: duplication_count `2`
+0:7  - 0:9                        "\\}"
+0:9  - 0:10             middle: delimiter `/`
+0:10 - 0:11             replacement: replacement
+0:10 - 0:11               replacement_literal `x`
+0:11 - 0:12             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{q,2\\}/x/"
+An interval retains malformed minimum (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a\{q,2\}/x/
 ------------------
 
+0:0  - 0:13   script
+0:0  - 0:13     command_list
+0:0  - 0:13       editing_command
+0:0  - 0:13         function: function
+0:0  - 0:13           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:10             expression: basic_reg_exp
+0:2  - 0:10               bre_branch
+0:2  - 0:10                 bre_expression
+0:2  - 0:10                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:10                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        issue: syntax_issue
+0:5  - 0:6                          undefined_syntax
+0:5  - 0:6                            invalid_interval_character `q`
+0:6  - 0:7                        ","
+0:7  - 0:8                        maximum: duplication_count `2`
+0:8  - 0:10                       "\\}"
+0:10 - 0:11             middle: delimiter `/`
+0:11 - 0:12             replacement: replacement
+0:11 - 0:12               replacement_literal `x`
+0:12 - 0:13             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{1qq2,3zz4\\}/x/"
+An interval retains separated count fragments (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a\{1qq2,3zz4\}/x/
 ------------------
 
+0:0  - 0:19   script
+0:0  - 0:19     command_list
+0:0  - 0:19       editing_command
+0:0  - 0:19         function: function
+0:0  - 0:19           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:16             expression: basic_reg_exp
+0:2  - 0:16               bre_branch
+0:2  - 0:16                 bre_expression
+0:2  - 0:16                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:16                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        minimum: duplication_count `1`
+0:6  - 0:8                        issue: syntax_issue
+0:6  - 0:8                          undefined_syntax
+0:6  - 0:8                            invalid_interval_character `qq`
+0:8  - 0:9                        minimum: duplication_count `2`
+0:9  - 0:10                       ","
+0:10 - 0:11                       maximum: duplication_count `3`
+0:11 - 0:13                       issue: syntax_issue
+0:11 - 0:13                         undefined_syntax
+0:11 - 0:13                           invalid_interval_character `zz`
+0:13 - 0:14                       maximum: duplication_count `4`
+0:14 - 0:16                       "\\}"
+0:16 - 0:17             middle: delimiter `/`
+0:17 - 0:18             replacement: replacement
+0:17 - 0:18               replacement_literal `x`
+0:18 - 0:19             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (BRE): "s/a\\{1,2,,3\\}/x/"
+An interval retains repeated separators (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a\{1,2,,3\}/x/
 ------------------
+
+0:0  - 0:16   script
+0:0  - 0:16     command_list
+0:0  - 0:16       editing_command
+0:0  - 0:16         function: function
+0:0  - 0:16           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:13             expression: basic_reg_exp
+0:2  - 0:13               bre_branch
+0:2  - 0:13                 bre_expression
+0:2  - 0:13                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:13                     bre_dupl_symbol
+0:3  - 0:5                        "\\{"
+0:5  - 0:6                        minimum: duplication_count `1`
+0:6  - 0:7                        ","
+0:7  - 0:8                        maximum: duplication_count `2`
+0:8  - 0:9                        issue: syntax_issue
+0:8  - 0:9                          undefined_syntax
+0:8  - 0:9                            unexpected_interval_separator
+0:8  - 0:9                              ","
+0:9  - 0:10                       issue: syntax_issue
+0:9  - 0:10                         undefined_syntax
+0:9  - 0:10                           unexpected_interval_separator
+0:9  - 0:10                             ","
+0:10 - 0:11                       maximum: duplication_count `3`
+0:11 - 0:13                       "\\}"
+0:13 - 0:14             middle: delimiter `/`
+0:14 - 0:15             replacement: replacement
+0:14 - 0:15               replacement_literal `x`
+0:15 - 0:16             closing: delimiter `/`
 
 ==================
 A backreference can follow an empty BRE group (BRE)
@@ -837,58 +1715,143 @@ A BRE plus remains a duplication operator after star
     (command_separator)))
 
 ==================
-rejects regular expression syntax (BRE): "/a\\{1,2,3\\}/p\n"
+An interval preserves an extra separator and its count (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /a\{1,2,3\}/p
 
 ------------------
 
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:13       editing_command
+0:0  - 0:12         addresses: address_clause
+0:0  - 0:12           first: address
+0:0  - 0:12             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:11               expression: basic_reg_exp
+0:1  - 0:11                 bre_branch
+0:1  - 0:11                   bre_expression
+0:1  - 0:11                     simple_bre
+0:1  - 0:2                        nondupl_bre
+0:1  - 0:2                          one_char_or_coll_elem_bre
+0:1  - 0:2                            ordinary_character `a`
+0:2  - 0:11                       bre_dupl_symbol
+0:2  - 0:4                          "\\{"
+0:4  - 0:5                          minimum: duplication_count `1`
+0:5  - 0:6                          ","
+0:6  - 0:7                          maximum: duplication_count `2`
+0:7  - 0:8                          issue: syntax_issue
+0:7  - 0:8                            undefined_syntax
+0:7  - 0:8                              unexpected_interval_separator
+0:7  - 0:8                                ","
+0:8  - 0:9                          maximum: duplication_count `3`
+0:9  - 0:11                         "\\}"
+0:11 - 0:12               closing: delimiter `/`
+0:12 - 0:13         function: function
+0:12 - 0:13           print_function
+0:12 - 0:13             verb: function_verb `p`
+0:13 - 1:0        command_separator
+0:13 - 0:14         `\n`
+
 ==================
-accepts an unmatched BRE interval close as a character escape
+An unmatched unmatched_interval_close remains a source leaf (BRE)
 :language(posix_sed)
+:cst
 ==================
 /\}/p
 
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (address_clause
-        (address
-          (context_address
-            (delimiter)
-            (basic_reg_exp
-              (bre_branch
-                (bre_expression
-                  (simple_bre
-                    (nondupl_bre
-                      (one_char_or_coll_elem_bre
-                        (sed_character_escape)))))))
-            (delimiter))))
-      (function
-        (print_function
-          (function_verb))))
-    (command_separator)))
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         issue: syntax_issue
+0:1 - 0:3                           undefined_syntax
+0:1 - 0:3                             unmatched_interval_close `\\}`
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
 
 ==================
-rejects regular expression syntax (BRE): "/\\)/p\n"
+An unmatched unmatched_subexpression_close remains a source leaf (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /\)/p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: basic_reg_exp
+0:1 - 0:3                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         issue: syntax_issue
+0:1 - 0:3                           undefined_syntax
+0:1 - 0:3                             unmatched_subexpression_close `\\)`
+0:3 - 0:4               closing: delimiter `/`
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
+
 ==================
-rejects regular expression syntax (BRE): "/\\\u0000\u0000\u0000/p"
+Regex NUL runs separate escaped and unescaped bytes (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /\   /p
 ------------------
+
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: basic_reg_exp
+0:1 - 0:5                 bre_branch
+0:1 - 0:3                   bre_expression
+0:1 - 0:3                     simple_bre
+0:1 - 0:3                       nondupl_bre
+0:1 - 0:3                         one_char_or_coll_elem_bre
+0:2 - 0:3                           issue: syntax_issue
+0:2 - 0:3                             invalid_syntax
+0:2 - 0:3                               invalid_regular_expression_character `\0`
+0:3 - 0:5                   bre_expression
+0:3 - 0:5                     simple_bre
+0:3 - 0:5                       nondupl_bre
+0:3 - 0:5                         one_char_or_coll_elem_bre
+0:3 - 0:5                           issue: syntax_issue
+0:3 - 0:5                             invalid_syntax
+0:3 - 0:5                               invalid_regular_expression_character `\0\0`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
 
 ==================
 A BRE | escape retains its operator role (BRE)
@@ -977,13 +1940,38 @@ s/a\+/x/
     (command_separator)))
 
 ==================
-rejects regular expression syntax (BRE): "s/\\{2\\}/x/\n"
+A leading BRE interval retains its duplication structure (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/\{2\}/x/
 
 ------------------
+
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: basic_reg_exp
+0:2  - 0:7                bre_branch
+0:2  - 0:7                  bre_expression
+0:2  - 0:7                    simple_bre
+0:2  - 0:7                      issue: syntax_issue
+0:2  - 0:7                        undefined_syntax
+0:2  - 0:7                          leading_duplication_symbol
+0:2  - 0:7                            operator: bre_dupl_symbol
+0:2  - 0:4                              "\\{"
+0:4  - 0:5                              minimum: duplication_count `2`
+0:5  - 0:7                              "\\}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+0:10 - 1:0        command_separator
+0:10 - 0:11         `\n`
 
 ==================
 An adjacent BRE star retains its duplication structure (BRE)
@@ -1019,14 +2007,43 @@ s/a**/x/
 0:8 - 1:0       command_separator
 0:8 - 0:9         `\n`
 ==================
-rejects regular expression syntax (BRE): "s/a*\\{2x\\}/x/\n"
+An adjacent malformed BRE interval retains its nested fault (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 s/a*\{2x\}/x/
 
 ------------------
 
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:13       editing_command
+0:0  - 0:13         function: function
+0:0  - 0:13           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:10             expression: basic_reg_exp
+0:2  - 0:10               bre_branch
+0:2  - 0:10                 bre_expression
+0:2  - 0:10                   simple_bre
+0:2  - 0:3                      nondupl_bre
+0:2  - 0:3                        one_char_or_coll_elem_bre
+0:2  - 0:3                          ordinary_character `a`
+0:3  - 0:4                      bre_dupl_symbol
+0:3  - 0:4                        "*"
+0:4  - 0:10                     bre_dupl_symbol
+0:4  - 0:6                        "\\{"
+0:6  - 0:7                        minimum: duplication_count `2`
+0:7  - 0:8                        issue: syntax_issue
+0:7  - 0:8                          undefined_syntax
+0:7  - 0:8                            invalid_interval_character `x`
+0:8  - 0:10                       "\\}"
+0:10 - 0:11             middle: delimiter `/`
+0:11 - 0:12             replacement: replacement
+0:11 - 0:12               replacement_literal `x`
+0:12 - 0:13             closing: delimiter `/`
+0:13 - 1:0        command_separator
+0:13 - 0:14         `\n`
 ==================
 An empty substitution group has no invented expression (BRE)
 :language(posix_sed)
@@ -1095,14 +2112,55 @@ s/\(a\)/x/
 0:10 - 0:11         `\n`
 
 ==================
-rejects regular expression syntax (BRE): "/\\(^a$\\)/p\n"
+BRE subexpression anchors retain their application-requirement issues (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 /\(^a$\)/p
 
 ------------------
 
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:10       editing_command
+0:0  - 0:9          addresses: address_clause
+0:0  - 0:9            first: address
+0:0  - 0:9              context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:8                expression: basic_reg_exp
+0:1  - 0:8                  bre_branch
+0:1  - 0:8                    bre_expression
+0:1  - 0:8                      simple_bre
+0:1  - 0:8                        nondupl_bre
+0:1  - 0:3                          "\\("
+0:3  - 0:6                          expression: basic_reg_exp
+0:3  - 0:6                            bre_branch
+0:3  - 0:4                              bre_expression
+0:3  - 0:4                                simple_bre
+0:3  - 0:4                                  nondupl_bre
+0:3  - 0:4                                    one_char_or_coll_elem_bre
+0:3  - 0:4                                      issue: syntax_issue
+0:3  - 0:4                                        nonconforming_syntax
+0:3  - 0:4                                          bre_subexpression_left_anchor `^`
+0:4  - 0:5                              bre_expression
+0:4  - 0:5                                simple_bre
+0:4  - 0:5                                  nondupl_bre
+0:4  - 0:5                                    one_char_or_coll_elem_bre
+0:4  - 0:5                                      ordinary_character `a`
+0:5  - 0:6                              bre_expression
+0:5  - 0:6                                simple_bre
+0:5  - 0:6                                  nondupl_bre
+0:5  - 0:6                                    one_char_or_coll_elem_bre
+0:5  - 0:6                                      issue: syntax_issue
+0:5  - 0:6                                        nonconforming_syntax
+0:5  - 0:6                                          bre_subexpression_right_anchor `$`
+0:6  - 0:8                          "\\)"
+0:8  - 0:9                closing: delimiter `/`
+0:9  - 0:10         function: function
+0:9  - 0:10           print_function
+0:9  - 0:10             verb: function_verb `p`
+0:10 - 1:0        command_separator
+0:10 - 0:11         `\n`
 ==================
 exposes POSIX repetition modifiers
 :language(posix_sed_ere)
@@ -1205,13 +2263,42 @@ s#^(ab|c)+d{2,3}$#x#
 0:20 - 0:21         `\n`
 
 ==================
-rejects regular expression syntax (ERE): "/a*{2}?|{3}/p\n"
+preserves adjacent and leading ERE duplication structures
 :language(posix_sed_ere)
-:error
 ==================
 /a*{2}?|{3}/p
 
 ------------------
+
+
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol)
+                  (ere_dupl_symbol
+                    (duplication_count)
+                    (repetition_modifier))))
+              (ere_branch
+                (ere_expression
+                  (syntax_issue
+                    (undefined_syntax
+                      (leading_duplication_symbol
+                        (ere_dupl_symbol
+                          (duplication_count))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
 
 ==================
 accepts empty ERE groups and classifies empty alternatives
@@ -1246,48 +2333,190 @@ accepts empty ERE groups and classifies empty alternatives
     (command_separator)))
 
 ==================
-rejects regular expression syntax (ERE): "/a{1[bc]}/p\n"
+A bracket expression after a malformed interval remains outside it (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /a{1[bc]}/p
 
 ------------------
 
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:11       editing_command
+0:0  - 0:10         addresses: address_clause
+0:0  - 0:10           first: address
+0:0  - 0:10             context_address
+0:0  - 0:1                opening: delimiter `/`
+0:1  - 0:9                expression: extended_reg_exp
+0:1  - 0:9                  ere_branch
+0:1  - 0:4                    ere_expression
+0:1  - 0:2                      one_char_or_coll_elem_ere
+0:1  - 0:2                        ordinary_character `a`
+0:2  - 0:4                      ere_dupl_symbol
+0:2  - 0:3                        "{"
+0:3  - 0:4                        minimum: duplication_count `1`
+0:4  - 0:4                        issue: syntax_issue
+0:4  - 0:4                          undefined_syntax
+0:4  - 0:4                            missing_interval_close
+0:4  - 0:8                    ere_expression
+0:4  - 0:8                      one_char_or_coll_elem_ere
+0:4  - 0:8                        bracket_expression
+0:4  - 0:5                          "["
+0:5  - 0:7                          matching_list
+0:5  - 0:7                            bracket_list
+0:5  - 0:7                              follow_list
+0:5  - 0:6                                expression_term
+0:5  - 0:6                                  single_expression
+0:5  - 0:6                                    end_range
+0:5  - 0:6                                      collating_element_single `b`
+0:6  - 0:7                                expression_term
+0:6  - 0:7                                  single_expression
+0:6  - 0:7                                    end_range
+0:6  - 0:7                                      collating_element_single `c`
+0:7  - 0:8                          "]"
+0:8  - 0:9                    ere_expression
+0:8  - 0:9                      one_char_or_coll_elem_ere
+0:8  - 0:9                        ordinary_character `}`
+0:9  - 0:10               closing: delimiter `/`
+0:10 - 0:11         function: function
+0:10 - 0:11           print_function
+0:10 - 0:11             verb: function_verb `p`
+0:11 - 1:0        command_separator
+0:11 - 0:12         `\n`
+
 ==================
-rejects regular expression syntax (ERE): "/(a{2)/p\n"
+A group closer after a malformed interval remains outside it (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /(a{2)/p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:7         addresses: address_clause
+0:0 - 0:7           first: address
+0:0 - 0:7             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:6               expression: extended_reg_exp
+0:1 - 0:6                 ere_branch
+0:1 - 0:6                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:5                     expression: extended_reg_exp
+0:2 - 0:5                       ere_branch
+0:2 - 0:5                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:5                           ere_dupl_symbol
+0:3 - 0:4                             "{"
+0:4 - 0:5                             minimum: duplication_count `2`
+0:5 - 0:5                             issue: syntax_issue
+0:5 - 0:5                               undefined_syntax
+0:5 - 0:5                                 missing_interval_close
+0:5 - 0:6                     ")"
+0:6 - 0:7               closing: delimiter `/`
+0:7 - 0:8         function: function
+0:7 - 0:8           print_function
+0:7 - 0:8             verb: function_verb `p`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
 ==================
-rejects regular expression syntax (ERE): "/a{1|b/p\n"
+leaves an alternative outside a malformed ERE interval
 :language(posix_sed_ere)
-:error
 ==================
 /a{1|b/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character))
+                  (ere_dupl_symbol
+                    (duplication_count)
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_interval_close))))))
+              (ere_branch
+                (ere_expression
+                  (one_char_or_coll_elem_ere
+                    (ordinary_character)))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (ERE): "/{x}/p\n"
+structures a leading malformed ERE interval
 :language(posix_sed_ere)
-:error
 ==================
 /{x}/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (context_address
+            (delimiter)
+            (extended_reg_exp
+              (ere_branch
+                (ere_expression
+                  (syntax_issue
+                    (undefined_syntax
+                      (leading_duplication_symbol
+                        (ere_dupl_symbol
+                          (syntax_issue
+                            (undefined_syntax
+                              (invalid_interval_character))))))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (ERE): "s}a{1"
+rejects an ERE interval whose delimiter prevents completion at EOF
 :language(posix_sed_ere)
-:error
 ==================
 s}a{1
 ------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (duplication_count)
+                  (syntax_issue
+                    (undefined_syntax
+                      (missing_interval_close)))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
 
 ==================
 recognizes escaped interval comma and count in ERE
@@ -1339,54 +2568,190 @@ s1a{\12}1b1
     (command_separator)))
 
 ==================
-rejects regular expression syntax (ERE): "s1a{\\"
+classifies a trailing interval escape as incomplete before an escaped digit delimiter
 :language(posix_sed_ere)
-:error
 ==================
 s1a{\
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (syntax_issue
+                    (incomplete_syntax
+                      (incomplete_regular_expression_escape)))
+                  (syntax_issue
+                    (incomplete_syntax
+                      (missing_interval_close)))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
 ==================
-rejects regular expression syntax (ERE): "s,a{1\\"
+classifies a trailing interval escape as incomplete before an escaped comma delimiter
 :language(posix_sed_ere)
-:error
 ==================
 s,a{1\
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (duplication_count)
+                  (syntax_issue
+                    (incomplete_syntax
+                      (incomplete_regular_expression_escape)))
+                  (syntax_issue
+                    (incomplete_syntax
+                      (missing_interval_close)))))))
+          (syntax_issue
+            (incomplete_syntax
+              (unterminated_regular_expression))))))))
+
 ==================
-rejects regular expression syntax (ERE): "s/a{x\u0000y}/z/\n"
+owns a NUL inside a malformed ERE interval
 :language(posix_sed_ere)
-:error
 ==================
 s/a{x y}/z/
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (ordinary_character))
+                (ere_dupl_symbol
+                  (syntax_issue
+                    (undefined_syntax
+                      (invalid_interval_character)))
+                  (syntax_issue
+                    (invalid_syntax
+                      (invalid_regular_expression_character)))
+                  (syntax_issue
+                    (undefined_syntax
+                      (invalid_interval_character)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (ERE): "s/\\\u0000/z/\n"
+owns a NUL inside an escaped ERE atom
 :language(posix_sed_ere)
-:error
 ==================
 s/\ /z/
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (syntax_issue
+                    (invalid_syntax
+                      (invalid_regular_expression_character)))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))
+    (command_separator)))
+
 ==================
-rejects regular expression syntax (ERE): "/("
+An unfinished empty group has no invented body (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /(
 ------------------
 
+0:0 - 0:2   script
+0:0 - 0:2     command_list
+0:0 - 0:2       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:2           first: address
+0:0 - 0:2             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:2               expression: extended_reg_exp
+0:1 - 0:2                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:2                     issue: syntax_issue
+0:2 - 0:2                       incomplete_syntax
+0:2 - 0:2                         unclosed_subexpression
+0:2 - 0:2               issue: syntax_issue
+0:2 - 0:2                 incomplete_syntax
+0:2 - 0:2                   unterminated_regular_expression
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           incomplete_syntax
+0:2 - 0:2             missing_function
+
 ==================
-rejects regular expression syntax (ERE): "/a\\"
+A final backslash retains its incomplete regular expression escape (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /a\
 ------------------
+
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:3           first: address
+0:0 - 0:3             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:3               expression: extended_reg_exp
+0:1 - 0:3                 ere_branch
+0:1 - 0:2                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:3                   ere_expression
+0:2 - 0:3                     one_char_or_coll_elem_ere
+0:2 - 0:3                       issue: syntax_issue
+0:2 - 0:3                         incomplete_syntax
+0:2 - 0:3                           incomplete_regular_expression_escape `\\`
+0:3 - 0:3               issue: syntax_issue
+0:3 - 0:3                 incomplete_syntax
+0:3 - 0:3                   unterminated_regular_expression
+0:3 - 0:3         issue: syntax_issue
+0:3 - 0:3           incomplete_syntax
+0:3 - 0:3             missing_function
 
 ==================
 A quoted character is a direct source leaf (ERE)
@@ -1592,76 +2957,301 @@ An empty group between literals remains a group (ERE)
 0:6 - 0:7             verb: function_verb `p`
 
 ==================
-rejects regular expression syntax (ERE): "s/("
+A bodyless final substitution group still requires its closer (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/(
 ------------------
 
+0:0 - 0:3   script
+0:0 - 0:3     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:3         function: function
+0:0 - 0:3           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:3             expression: extended_reg_exp
+0:2 - 0:3               ere_branch
+0:2 - 0:3                 ere_expression
+0:2 - 0:3                   "("
+0:3 - 0:3                   issue: syntax_issue
+0:3 - 0:3                     incomplete_syntax
+0:3 - 0:3                       unclosed_subexpression
+0:3 - 0:3             issue: syntax_issue
+0:3 - 0:3               incomplete_syntax
+0:3 - 0:3                 unterminated_regular_expression
+
 ==================
-rejects regular expression syntax (ERE): "s/(/x/"
+A bodyless substitution group before a delimiter is unclosed (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/(/x/
 ------------------
 
+0:0 - 0:6   script
+0:0 - 0:6     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:6         function: function
+0:0 - 0:6           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:3             expression: extended_reg_exp
+0:2 - 0:3               ere_branch
+0:2 - 0:3                 ere_expression
+0:2 - 0:3                   "("
+0:3 - 0:3                   issue: syntax_issue
+0:3 - 0:3                     undefined_syntax
+0:3 - 0:3                       unclosed_subexpression
+0:3 - 0:4             middle: delimiter `/`
+0:4 - 0:5             replacement: replacement
+0:4 - 0:5               replacement_literal `x`
+0:5 - 0:6             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{}/x/"
+An interval retains empty (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{}/x/
 ------------------
 
+0:0 - 0:8   script
+0:0 - 0:8     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:8         function: function
+0:0 - 0:8           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:5             expression: extended_reg_exp
+0:2 - 0:5               ere_branch
+0:2 - 0:5                 ere_expression
+0:2 - 0:3                   one_char_or_coll_elem_ere
+0:2 - 0:3                     ordinary_character `a`
+0:3 - 0:5                   ere_dupl_symbol
+0:3 - 0:4                     "{"
+0:4 - 0:4                     issue: syntax_issue
+0:4 - 0:4                       undefined_syntax
+0:4 - 0:4                         missing_interval_minimum
+0:4 - 0:5                     "}"
+0:5 - 0:6             middle: delimiter `/`
+0:6 - 0:7             replacement: replacement
+0:6 - 0:7               replacement_literal `x`
+0:7 - 0:8             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{\\,}/x/"
+An interval retains escaped comma (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{\,}/x/
 ------------------
 
+0:0  - 0:10   script
+0:0  - 0:10     command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: extended_reg_exp
+0:2  - 0:7                ere_branch
+0:2  - 0:7                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:7                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:6                      issue: syntax_issue
+0:4  - 0:6                        undefined_syntax
+0:4  - 0:6                          invalid_interval_character `\\,`
+0:6  - 0:7                      "}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{q\\zq}/x/"
+An interval retains invalid runs separated by an escape (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{q\zq}/x/
 ------------------
 
+0:0  - 0:12   script
+0:0  - 0:12     command_list
+0:0  - 0:12       editing_command
+0:0  - 0:12         function: function
+0:0  - 0:12           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:9              expression: extended_reg_exp
+0:2  - 0:9                ere_branch
+0:2  - 0:9                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:9                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      issue: syntax_issue
+0:4  - 0:5                        undefined_syntax
+0:4  - 0:5                          invalid_interval_character `q`
+0:5  - 0:7                      issue: syntax_issue
+0:5  - 0:7                        undefined_syntax
+0:5  - 0:7                          invalid_interval_character `\\z`
+0:7  - 0:8                      issue: syntax_issue
+0:7  - 0:8                        undefined_syntax
+0:7  - 0:8                          invalid_interval_character `q`
+0:8  - 0:9                      "}"
+0:9  - 0:10             middle: delimiter `/`
+0:10 - 0:11             replacement: replacement
+0:10 - 0:11               replacement_literal `x`
+0:11 - 0:12             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{,2}/x/"
+An interval retains omitted minimum (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{,2}/x/
 ------------------
 
+0:0  - 0:10   script
+0:0  - 0:10     command_list
+0:0  - 0:10       editing_command
+0:0  - 0:10         function: function
+0:0  - 0:10           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:7              expression: extended_reg_exp
+0:2  - 0:7                ere_branch
+0:2  - 0:7                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:7                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:4                      issue: syntax_issue
+0:4  - 0:4                        undefined_syntax
+0:4  - 0:4                          missing_interval_minimum
+0:4  - 0:5                      ","
+0:5  - 0:6                      maximum: duplication_count `2`
+0:6  - 0:7                      "}"
+0:7  - 0:8              middle: delimiter `/`
+0:8  - 0:9              replacement: replacement
+0:8  - 0:9                replacement_literal `x`
+0:9  - 0:10             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{q,2}/x/"
+An interval retains malformed minimum (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{q,2}/x/
 ------------------
 
+0:0  - 0:11   script
+0:0  - 0:11     command_list
+0:0  - 0:11       editing_command
+0:0  - 0:11         function: function
+0:0  - 0:11           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:8              expression: extended_reg_exp
+0:2  - 0:8                ere_branch
+0:2  - 0:8                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:8                    ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      issue: syntax_issue
+0:4  - 0:5                        undefined_syntax
+0:4  - 0:5                          invalid_interval_character `q`
+0:5  - 0:6                      ","
+0:6  - 0:7                      maximum: duplication_count `2`
+0:7  - 0:8                      "}"
+0:8  - 0:9              middle: delimiter `/`
+0:9  - 0:10             replacement: replacement
+0:9  - 0:10               replacement_literal `x`
+0:10 - 0:11             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{1qq2,3zz4}/x/"
+An interval retains separated count fragments (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{1qq2,3zz4}/x/
 ------------------
 
+0:0  - 0:17   script
+0:0  - 0:17     command_list
+0:0  - 0:17       editing_command
+0:0  - 0:17         function: function
+0:0  - 0:17           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:14             expression: extended_reg_exp
+0:2  - 0:14               ere_branch
+0:2  - 0:14                 ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:14                   ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      minimum: duplication_count `1`
+0:5  - 0:7                      issue: syntax_issue
+0:5  - 0:7                        undefined_syntax
+0:5  - 0:7                          invalid_interval_character `qq`
+0:7  - 0:8                      minimum: duplication_count `2`
+0:8  - 0:9                      ","
+0:9  - 0:10                     maximum: duplication_count `3`
+0:10 - 0:12                     issue: syntax_issue
+0:10 - 0:12                       undefined_syntax
+0:10 - 0:12                         invalid_interval_character `zz`
+0:12 - 0:13                     maximum: duplication_count `4`
+0:13 - 0:14                     "}"
+0:14 - 0:15             middle: delimiter `/`
+0:15 - 0:16             replacement: replacement
+0:15 - 0:16               replacement_literal `x`
+0:16 - 0:17             closing: delimiter `/`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{1,2,,3}/x/"
+An interval retains repeated separators (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{1,2,,3}/x/
 ------------------
+
+0:0  - 0:14   script
+0:0  - 0:14     command_list
+0:0  - 0:14       editing_command
+0:0  - 0:14         function: function
+0:0  - 0:14           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:11             expression: extended_reg_exp
+0:2  - 0:11               ere_branch
+0:2  - 0:11                 ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:11                   ere_dupl_symbol
+0:3  - 0:4                      "{"
+0:4  - 0:5                      minimum: duplication_count `1`
+0:5  - 0:6                      ","
+0:6  - 0:7                      maximum: duplication_count `2`
+0:7  - 0:8                      issue: syntax_issue
+0:7  - 0:8                        undefined_syntax
+0:7  - 0:8                          unexpected_interval_separator
+0:7  - 0:8                            ","
+0:8  - 0:9                      issue: syntax_issue
+0:8  - 0:9                        undefined_syntax
+0:8  - 0:9                          unexpected_interval_separator
+0:8  - 0:9                            ","
+0:9  - 0:10                     maximum: duplication_count `3`
+0:10 - 0:11                     "}"
+0:11 - 0:12             middle: delimiter `/`
+0:12 - 0:13             replacement: replacement
+0:12 - 0:13               replacement_literal `x`
+0:13 - 0:14             closing: delimiter `/`
 
 ==================
 An empty group can precede an ERE alternative (ERE)
@@ -1866,63 +3456,237 @@ An empty alternative inside a group belongs to its expression (ERE)
 0:6 - 1:0       command_separator
 0:6 - 0:7         `\n`
 ==================
-rejects regular expression syntax (ERE): "/(a|"
+An unfinished alternative and group retain independent issues (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /(a|
 ------------------
 
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:4                   ere_expression
+0:1 - 0:2                     "("
+0:2 - 0:4                     expression: extended_reg_exp
+0:2 - 0:3                       ere_branch
+0:2 - 0:3                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:4                       "|"
+0:4 - 0:4                     issue: syntax_issue
+0:4 - 0:4                       incomplete_syntax
+0:4 - 0:4                         unclosed_subexpression
+0:4 - 0:4               issue: syntax_issue
+0:4 - 0:4                 incomplete_syntax
+0:4 - 0:4                   unterminated_regular_expression
+0:4 - 0:4         issue: syntax_issue
+0:4 - 0:4           incomplete_syntax
+0:4 - 0:4             missing_function
 ==================
-rejects regular expression syntax (ERE): "/a{1"
+An unfinished interval at EOF retains its count (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /a{1
 ------------------
 
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:4           first: address
+0:0 - 0:4             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:4               expression: extended_reg_exp
+0:1 - 0:4                 ere_branch
+0:1 - 0:4                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:4                     ere_dupl_symbol
+0:2 - 0:3                       "{"
+0:3 - 0:4                       minimum: duplication_count `1`
+0:4 - 0:4                       issue: syntax_issue
+0:4 - 0:4                         incomplete_syntax
+0:4 - 0:4                           missing_interval_close
+0:4 - 0:4               issue: syntax_issue
+0:4 - 0:4                 incomplete_syntax
+0:4 - 0:4                   unterminated_regular_expression
+0:4 - 0:4         issue: syntax_issue
+0:4 - 0:4           incomplete_syntax
+0:4 - 0:4             missing_function
+
 ==================
-rejects regular expression syntax (ERE): "/a{1)}/p\n"
+An unmatched group closer is malformed interval content after 1 (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /a{1)}/p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:7         addresses: address_clause
+0:0 - 0:7           first: address
+0:0 - 0:7             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:6               expression: extended_reg_exp
+0:1 - 0:6                 ere_branch
+0:1 - 0:6                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:6                     ere_dupl_symbol
+0:2 - 0:3                       "{"
+0:3 - 0:4                       minimum: duplication_count `1`
+0:4 - 0:5                       issue: syntax_issue
+0:4 - 0:5                         undefined_syntax
+0:4 - 0:5                           invalid_interval_character `)`
+0:5 - 0:6                       "}"
+0:6 - 0:7               closing: delimiter `/`
+0:7 - 0:8         function: function
+0:7 - 0:8           print_function
+0:7 - 0:8             verb: function_verb `p`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
 ==================
-rejects regular expression syntax (ERE): "/a{)}/p\n"
+An unmatched group closer is malformed interval content after an omitted count (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /a{)}/p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:5                   ere_expression
+0:1 - 0:2                     one_char_or_coll_elem_ere
+0:1 - 0:2                       ordinary_character `a`
+0:2 - 0:5                     ere_dupl_symbol
+0:2 - 0:3                       "{"
+0:3 - 0:4                       issue: syntax_issue
+0:3 - 0:4                         undefined_syntax
+0:3 - 0:4                           invalid_interval_character `)`
+0:4 - 0:5                       "}"
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+0:7 - 1:0       command_separator
+0:7 - 0:8         `\n`
+
 ==================
-rejects regular expression syntax (ERE): "s/a{1\\"
+An interval escape with no usable delimiter is invalid at EOF (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a{1\
 ------------------
 
+0:0 - 0:6   script
+0:0 - 0:6     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:6         function: function
+0:0 - 0:6           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:6             expression: extended_reg_exp
+0:2 - 0:6               ere_branch
+0:2 - 0:6                 ere_expression
+0:2 - 0:3                   one_char_or_coll_elem_ere
+0:2 - 0:3                     ordinary_character `a`
+0:3 - 0:6                   ere_dupl_symbol
+0:3 - 0:4                     "{"
+0:4 - 0:5                     minimum: duplication_count `1`
+0:5 - 0:6                     issue: syntax_issue
+0:5 - 0:6                       undefined_syntax
+0:5 - 0:6                         invalid_interval_character `\\`
+0:6 - 0:6                     issue: syntax_issue
+0:6 - 0:6                       incomplete_syntax
+0:6 - 0:6                         missing_interval_close
+0:6 - 0:6             issue: syntax_issue
+0:6 - 0:6               incomplete_syntax
+0:6 - 0:6                 unterminated_regular_expression
+
 ==================
-rejects regular expression syntax (ERE): "/\\\u0000\u0000\u0000/p"
+Regex NUL runs separate escaped and unescaped bytes (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 /\   /p
 ------------------
 
+0:0 - 0:7   script
+0:0 - 0:7     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:6         addresses: address_clause
+0:0 - 0:6           first: address
+0:0 - 0:6             context_address
+0:0 - 0:1               opening: delimiter `/`
+0:1 - 0:5               expression: extended_reg_exp
+0:1 - 0:5                 ere_branch
+0:1 - 0:3                   ere_expression
+0:1 - 0:3                     one_char_or_coll_elem_ere
+0:2 - 0:3                       issue: syntax_issue
+0:2 - 0:3                         invalid_syntax
+0:2 - 0:3                           invalid_regular_expression_character `\0`
+0:3 - 0:5                   ere_expression
+0:3 - 0:5                     one_char_or_coll_elem_ere
+0:3 - 0:5                       issue: syntax_issue
+0:3 - 0:5                         invalid_syntax
+0:3 - 0:5                           invalid_regular_expression_character `\0\0`
+0:5 - 0:6               closing: delimiter `/`
+0:6 - 0:7         function: function
+0:6 - 0:7           print_function
+0:6 - 0:7             verb: function_verb `p`
+
 ==================
-rejects regular expression syntax (ERE): "s/+?/x/\n"
+A leading ERE repetition retains its modifier (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/+?/x/
 
 ------------------
+
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:7       editing_command
+0:0 - 0:7         function: function
+0:0 - 0:7           substitute_function
+0:0 - 0:1             verb: function_verb `s`
+0:1 - 0:2             opening: delimiter `/`
+0:2 - 0:4             expression: extended_reg_exp
+0:2 - 0:4               ere_branch
+0:2 - 0:4                 ere_expression
+0:2 - 0:4                   issue: syntax_issue
+0:2 - 0:4                     undefined_syntax
+0:2 - 0:4                       leading_duplication_symbol
+0:2 - 0:4                         operator: ere_dupl_symbol
+0:2 - 0:3                           "+"
+0:3 - 0:4                           modifier: repetition_modifier `?`
+0:4 - 0:5             middle: delimiter `/`
+0:5 - 0:6             replacement: replacement
+0:5 - 0:6               replacement_literal `x`
+0:6 - 0:7             closing: delimiter `/`
+0:7 - 1:0       command_separator
+0:7 - 0:8         `\n`
 
 ==================
 An adjacent ERE repetition retains its modifier (ERE)
@@ -1957,14 +3721,41 @@ s/a**?/x/
 0:9 - 1:0       command_separator
 0:9 - 0:10         `\n`
 ==================
-rejects regular expression syntax (ERE): "s/a*{2x}/x/\n"
+An adjacent malformed ERE interval retains its nested fault (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 s/a*{2x}/x/
 
 ------------------
 
+0:0  - 1:0    script
+0:0  - 1:0      command_list
+0:0  - 0:11       editing_command
+0:0  - 0:11         function: function
+0:0  - 0:11           substitute_function
+0:0  - 0:1              verb: function_verb `s`
+0:1  - 0:2              opening: delimiter `/`
+0:2  - 0:8              expression: extended_reg_exp
+0:2  - 0:8                ere_branch
+0:2  - 0:8                  ere_expression
+0:2  - 0:3                    one_char_or_coll_elem_ere
+0:2  - 0:3                      ordinary_character `a`
+0:3  - 0:4                    ere_dupl_symbol
+0:3  - 0:4                      "*"
+0:4  - 0:8                    ere_dupl_symbol
+0:4  - 0:5                      "{"
+0:5  - 0:6                      minimum: duplication_count `2`
+0:6  - 0:7                      issue: syntax_issue
+0:6  - 0:7                        undefined_syntax
+0:6  - 0:7                          invalid_interval_character `x`
+0:7  - 0:8                      "}"
+0:8  - 0:9              middle: delimiter `/`
+0:9  - 0:10             replacement: replacement
+0:9  - 0:10               replacement_literal `x`
+0:10 - 0:11             closing: delimiter `/`
+0:11 - 1:0        command_separator
+0:11 - 0:12         `\n`
 ==================
 An empty substitution group has no invented expression (ERE)
 :language(posix_sed_ere)
@@ -2474,12 +4265,31 @@ s*\*\**x*
           (delimiter))))))
 
 ==================
-rejects regular expression syntax (ERE): "s*\\**x*"
+An escaped leading ERE star retains its duplication issue (ERE)
 :language(posix_sed_ere)
-:error
 ==================
 s*\**x*
 ------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (syntax_issue
+                  (undefined_syntax
+                    (leading_duplication_symbol
+                      (ere_dupl_symbol
+                        (escaped_delimiter))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))))
 
 ==================
 An adjacent escaped star retains its duplication structure (BRE)
@@ -2845,20 +4655,69 @@ s|a\||x|
           (delimiter))))))
 
 ==================
-rejects regular expression syntax (BRE): "s[\\[[x["
+An escaped bracket delimiter starts an unclosed bracket (BRE)
 :language(posix_sed)
-:error
 ==================
 s[\[[x[
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (basic_reg_exp
+            (bre_branch
+              (bre_expression
+                (simple_bre
+                  (nondupl_bre
+                    (one_char_or_coll_elem_bre
+                      (bracket_expression
+                        (escaped_delimiter)
+                        (syntax_issue
+                          (undefined_syntax
+                            (missing_bracket_list)))
+                        (syntax_issue
+                          (undefined_syntax
+                            (unclosed_bracket_expression))))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))))
+
 ==================
-rejects regular expression syntax (ERE): "s[\\[[x["
+An escaped bracket delimiter starts an unclosed bracket (ERE)
 :language(posix_sed_ere)
-:error
 ==================
 s[\[[x[
 ------------------
+
+(script
+  (command_list
+    (editing_command
+      (function
+        (substitute_function
+          (function_verb)
+          (delimiter)
+          (extended_reg_exp
+            (ere_branch
+              (ere_expression
+                (one_char_or_coll_elem_ere
+                  (bracket_expression
+                    (escaped_delimiter)
+                    (syntax_issue
+                      (undefined_syntax
+                        (missing_bracket_list)))
+                    (syntax_issue
+                      (undefined_syntax
+                        (unclosed_bracket_expression))))))))
+          (delimiter)
+          (replacement
+            (replacement_literal))
+          (delimiter))))))
+
 
 ==================
 A numeric escape retains source inside its duplication owner (BRE)
@@ -2946,67 +4805,3 @@ Numeric interval punctuation and counts preserve their fields (ERE)
 0:23 - 0:24         function: function
 0:23 - 0:24           print_function
 0:23 - 0:24             verb: function_verb `p`
-
-==================
-BRE repeats only the last numeric byte atom
-:language(posix_sed)
-:cst
-==================
-s/\xc3\xa9*/X/
-------------------
-
-0:0  - 0:14   script
-0:0  - 0:14     command_list
-0:0  - 0:14       editing_command
-0:0  - 0:14         function: function
-0:0  - 0:14           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:11             expression: basic_reg_exp
-0:2  - 0:11               bre_branch
-0:2  - 0:6                  bre_expression
-0:2  - 0:6                    simple_bre
-0:2  - 0:6                      nondupl_bre
-0:2  - 0:6                        one_char_or_coll_elem_bre
-0:2  - 0:6                          sed_character_escape `\\xc3`
-0:6  - 0:11                 bre_expression
-0:6  - 0:11                   simple_bre
-0:6  - 0:10                     nondupl_bre
-0:6  - 0:10                       one_char_or_coll_elem_bre
-0:6  - 0:10                         sed_character_escape `\\xa9`
-0:10 - 0:11                     bre_dupl_symbol
-0:10 - 0:11                       "*"
-0:11 - 0:12             middle: delimiter `/`
-0:12 - 0:13             replacement: replacement
-0:12 - 0:13               replacement_literal `X`
-0:13 - 0:14             closing: delimiter `/`
-
-==================
-ERE repeats only the last numeric byte atom
-:language(posix_sed_ere)
-:cst
-==================
-s/\xc3\xa9*/X/
-------------------
-
-0:0  - 0:14   script
-0:0  - 0:14     command_list
-0:0  - 0:14       editing_command
-0:0  - 0:14         function: function
-0:0  - 0:14           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:11             expression: extended_reg_exp
-0:2  - 0:11               ere_branch
-0:2  - 0:6                  ere_expression
-0:2  - 0:6                    one_char_or_coll_elem_ere
-0:2  - 0:6                      sed_character_escape `\\xc3`
-0:6  - 0:11                 ere_expression
-0:6  - 0:10                   one_char_or_coll_elem_ere
-0:6  - 0:10                     sed_character_escape `\\xa9`
-0:10 - 0:11                   ere_dupl_symbol
-0:10 - 0:11                     "*"
-0:11 - 0:12             middle: delimiter `/`
-0:12 - 0:13             replacement: replacement
-0:12 - 0:13               replacement_literal `X`
-0:13 - 0:14             closing: delimiter `/`

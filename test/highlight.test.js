@@ -196,6 +196,267 @@ function assertCommand(arguments_) {
   return result.stdout;
 }
 
+const lineOperandContexts = [
+  {
+    name: "branch label",
+    prefix: "b ",
+    capture: "label",
+    prefixCaptures: [[0, 1, "keyword"]],
+  },
+  {
+    name: "test label",
+    prefix: "t ",
+    capture: "label",
+    prefixCaptures: [[0, 1, "keyword"]],
+  },
+  {
+    name: "label declaration",
+    prefix: ":",
+    capture: "label",
+    prefixCaptures: [[0, 1, "keyword"]],
+  },
+  {
+    name: "read file",
+    prefix: "r ",
+    capture: "string.special.path",
+    prefixCaptures: [[0, 1, "keyword"]],
+  },
+  {
+    name: "write file",
+    prefix: "w ",
+    capture: "string.special.path",
+    prefixCaptures: [[0, 1, "keyword"]],
+  },
+  {
+    name: "substitution write file",
+    prefix: "s/a/b/w ",
+    capture: "string.special.path",
+    prefixCaptures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 3, "string.regexp"],
+      [3, 4, "punctuation.delimiter"],
+      [4, 5, "string"],
+      [5, 6, "punctuation.delimiter"],
+      [6, 7, "keyword.modifier"],
+    ],
+  },
+];
+
+const lineOperandFragments = [
+  {
+    name: "middle issue",
+    nulSource: "a\u0000b",
+    invalidSource: Buffer.from("a\xffb", "latin1"),
+    ranges: [
+      [0, 1],
+      [2, 3],
+    ],
+  },
+  {
+    name: "leading issue",
+    nulSource: "\u0000ab",
+    invalidSource: Buffer.from("\xffab", "latin1"),
+    ranges: [[1, 3]],
+  },
+  {
+    name: "trailing issue",
+    nulSource: "ab\u0000",
+    invalidSource: Buffer.from("ab\xff", "latin1"),
+    ranges: [[0, 2]],
+  },
+  {
+    name: "consecutive issues",
+    nulSource: "a\u0000\u0000b",
+    invalidSource: Buffer.from("a\xff\xffb", "latin1"),
+    ranges: [
+      [0, 1],
+      [3, 4],
+    ],
+  },
+  {
+    name: "separated issues",
+    nulSource: "a\u0000b\u0000c",
+    invalidSource: Buffer.from("a\xffb\xffc", "latin1"),
+    ranges: [
+      [0, 1],
+      [2, 3],
+      [4, 5],
+    ],
+  },
+  {
+    name: "only issues",
+    nulSource: "\u0000\u0000",
+    invalidSource: Buffer.from([0xff, 0xff]),
+    ranges: [],
+  },
+  {
+    name: "whitespace beside an issue",
+    nulSource: "a \u0000\t b",
+    invalidSource: Buffer.from("a \xff\t b", "latin1"),
+    ranges: [
+      [0, 2],
+      [3, 6],
+    ],
+    labelRanges: [
+      [0, 1],
+      [1, 2],
+      [3, 5],
+      [5, 6],
+    ],
+  },
+  {
+    name: "Unicode and literal replacement characters beside an issue",
+    nulSource: "é\ufffd\u0000\ufffd😀",
+    invalidSource: Buffer.concat([
+      Buffer.from("é\ufffd"),
+      Buffer.from([0xff]),
+      Buffer.from("\ufffd😀"),
+    ]),
+    ranges: [
+      [0, 5],
+      [6, 13],
+    ],
+  },
+];
+
+const invalidEncodingCases = [
+  {
+    name: "invalid encoding splits comment text",
+    source: Buffer.from("#a\xffb\n", "latin1"),
+    capture: "comment",
+    ranges: [
+      [0, 0, 0, 1],
+      [0, 1, 0, 2],
+      [0, 3, 0, 4],
+    ],
+  },
+  {
+    name: "invalid encoding splits replacement literals",
+    source: Buffer.from("s/a/x\xffy/\n", "latin1"),
+    capture: "string",
+    ranges: [
+      [0, 4, 0, 5],
+      [0, 6, 0, 7],
+    ],
+  },
+  {
+    name: "invalid encoding splits translation literals",
+    source: Buffer.from("y/x\xffy//\n", "latin1"),
+    capture: "string",
+    ranges: [
+      [0, 2, 0, 3],
+      [0, 4, 0, 5],
+    ],
+  },
+  {
+    name: "invalid encoding splits text literals",
+    source: Buffer.from("a\\\nx\xffy\n", "latin1"),
+    capture: "string",
+    ranges: [
+      [1, 0, 1, 1],
+      [1, 2, 1, 3],
+    ],
+  },
+  {
+    name: "invalid encoding does not become a replacement escape",
+    source: Buffer.from("s/a/\\\xff/\n", "latin1"),
+    capture: "string.escape",
+    ranges: [],
+  },
+  {
+    name: "invalid encoding does not become a translation escape",
+    source: Buffer.from("y/\\\xff//\n", "latin1"),
+    capture: "string.escape",
+    ranges: [],
+  },
+  {
+    name: "invalid encoding does not become a text escape",
+    source: Buffer.from("a\\\n\\\xff\n", "latin1"),
+    capture: "string.escape",
+    ranges: [],
+  },
+  {
+    name: "invalid UTF-8 after a backslash",
+    source: Buffer.from("/\\\xff/p\n", "latin1"),
+    capture: "string.escape",
+    ranges: [],
+  },
+  ...lineOperandContexts.flatMap((context) =>
+    lineOperandFragments
+      .filter(
+        (fragment) =>
+          context.capture !== "label" ||
+          fragment.name !== "whitespace beside an issue",
+      )
+      .map((fragment) => ({
+        name: `${context.name}: invalid encoding: ${fragment.name}`,
+        source: Buffer.concat([
+          Buffer.from(context.prefix),
+          Buffer.from(fragment.invalidSource),
+          Buffer.from("\n"),
+        ]),
+        capture: context.capture,
+        ranges: (context.capture === "label"
+          ? (fragment.labelRanges ?? fragment.ranges)
+          : fragment.ranges
+        ).map(([start, end]) => [
+          0,
+          context.prefix.length + start,
+          0,
+          context.prefix.length + end,
+        ]),
+        preservedCaptures: Object.fromEntries(
+          ["keyword", "keyword.modifier"].map((capture) => [
+            capture,
+            context.prefixCaptures
+              .filter(([, , name]) => name === capture)
+              .map(([start, end]) => [0, start, 0, end]),
+          ]),
+        ),
+      })),
+  ),
+];
+
+for (const grammar of grammars) {
+  for (const testCase of invalidEncodingCases) {
+    test(`${grammar.name}: ${testCase.name}: only identified bytes are highlighted`, () => {
+      const path = join(directory, `${grammar.name}-lexical.sed`);
+      writeFileSync(path, testCase.source);
+      const output = assertCommand([
+        "query",
+        "--captures",
+        "--scope",
+        grammar.scope,
+        join(directory, `${grammar.name}.scm`),
+        path,
+      ]);
+      for (const [capture, ranges] of [
+        [testCase.capture, testCase.ranges],
+        ...Object.entries(
+          "preservedCaptures" in testCase ? testCase.preservedCaptures : {},
+        ),
+      ]) {
+        const captures = output
+          .split("\n")
+          .filter(
+            (line) =>
+              /capture: [0-9]+ - ([a-z_.]+),/.exec(line)?.[1] === capture,
+          )
+          .map((line) => {
+            const range =
+              /start: \(([0-9]+), ([0-9]+)\), end: \(([0-9]+), ([0-9]+)\)/.exec(
+                line,
+              );
+            assert.ok(range, line);
+            return range.slice(1).map(Number);
+          });
+        assert.deepEqual(captures, ranges, `${testCase.name}: ${capture}`);
+      }
+    });
+  }
+}
+
 const finalCaptureCases = [
   {
     name: "label captures stop at comments and preserve long Unicode names",
@@ -242,7 +503,7 @@ const finalCaptureCases = [
   },
   {
     name: "block braces override function captures beside addresses and negation",
-    source: "1,$!{p;d;}\n",
+    source: "1,$!{p;d}\n",
     captures: [
       [0, 1, "number"],
       [1, 2, "punctuation.delimiter"],
@@ -252,8 +513,7 @@ const finalCaptureCases = [
       [5, 6, "keyword"],
       [6, 7, "punctuation.delimiter"],
       [7, 8, "keyword"],
-      [8, 9, "punctuation.delimiter"],
-      [9, 10, "punctuation.bracket"],
+      [8, 9, "punctuation.bracket"],
     ],
   },
   {
@@ -268,6 +528,26 @@ const finalCaptureCases = [
       [13, 16, "label"],
     ],
   },
+  ...lineOperandContexts.flatMap((context) =>
+    lineOperandFragments
+      .filter(
+        (fragment) =>
+          context.capture !== "label" ||
+          fragment.name !== "whitespace beside an issue",
+      )
+      .map((fragment) => ({
+        name: `${context.name}: NUL: ${fragment.name}`,
+        source: `${context.prefix}${fragment.nulSource}\n`,
+        captures: [
+          ...context.prefixCaptures,
+          ...fragment.ranges.map(([start, end]) => [
+            context.prefix.length + start,
+            context.prefix.length + end,
+            context.capture,
+          ]),
+        ],
+      })),
+  ),
   {
     name: "substitutions separate patterns, UTF-8 replacements, references and flags",
     source: "s/a/é😀&/gp\n",
@@ -294,10 +574,11 @@ const finalCaptureCases = [
   },
   {
     name: "ordinary and substitution write files retain semicolons in path captures",
-    source: "w a b;p\ns/a/b/w c d;p\n",
+    source: "w a\u0000b;p\ns/a/b/w c\u0000d;p\n",
     captures: [
       [0, 1, "keyword"],
-      [2, 7, "string.special.path"],
+      [2, 3, "string.special.path"],
+      [4, 7, "string.special.path"],
       [8, 9, "keyword"],
       [9, 10, "punctuation.delimiter"],
       [10, 11, "string.regexp"],
@@ -305,7 +586,8 @@ const finalCaptureCases = [
       [12, 13, "string"],
       [13, 14, "punctuation.delimiter"],
       [14, 15, "keyword.modifier"],
-      [16, 21, "string.special.path"],
+      [16, 17, "string.special.path"],
+      [18, 21, "string.special.path"],
     ],
   },
   {
@@ -406,19 +688,6 @@ const finalCaptureCases = [
       [27, 33, "string.special.path"],
     ],
     languages: ["posix_sed"],
-  },
-  {
-    name: "numeric byte atoms retain escape captures before repetition",
-    source: "s/\\xc3\\xa9*/X/",
-    captures: [
-      [0, 1, "keyword"],
-      [1, 2, "punctuation.delimiter"],
-      [2, 10, "string.escape"],
-      [10, 11, "operator"],
-      [11, 12, "punctuation.delimiter"],
-      [12, 13, "string"],
-      [13, 14, "punctuation.delimiter"],
-    ],
   },
   {
     name: "adopted ordinary RE and replacement escapes receive escape captures",
@@ -683,6 +952,32 @@ const finalCaptureCases = [
     languages: ["posix_sed"],
   },
   {
+    name: "unmatched BRE closer issues have no captures",
+    source: "/\\)\\}/p\n",
+    captures: [
+      [0, 1, "punctuation.delimiter"],
+      [5, 6, "punctuation.delimiter"],
+      [6, 7, "keyword"],
+    ],
+    languages: ["posix_sed"],
+    valid: false,
+  },
+  {
+    name: "flag-like text after write receives a file capture",
+    source: "s/a/b/wg2 output\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 3, "string.regexp"],
+      [3, 4, "punctuation.delimiter"],
+      [4, 5, "string"],
+      [5, 6, "punctuation.delimiter"],
+      [6, 7, "keyword.modifier"],
+      [7, 16, "string.special.path"],
+    ],
+    valid: false,
+  },
+  {
     name: "BRE interval commas preserve delimiter escape captures",
     source: "s,a\\{1\\,2\\},b,",
     captures: [
@@ -716,6 +1011,187 @@ const finalCaptureCases = [
       [10, 11, "punctuation.delimiter"],
     ],
     languages: ["posix_sed_ere"],
+  },
+  {
+    name: "character class partial closing delimiter",
+    source: "s/[[:alpha:",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 10, "character.special"],
+      [10, 11, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: "collating symbol partial closing delimiter",
+    source: "s/[[.a.",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "character.special"],
+      [6, 7, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: "equivalence class partial closing delimiter",
+    source: "s/[[=a=",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "character.special"],
+      [6, 7, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: "NUL after a backslash does not become a regular expression escape",
+    source: "/\\\u0000/p\n",
+    captures: [
+      [0, 1, "punctuation.delimiter"],
+      [3, 4, "punctuation.delimiter"],
+      [4, 5, "keyword"],
+    ],
+    valid: false,
+  },
+  {
+    name: "special regular expression delimiters retain escape captures",
+    source: "s.\\..x.",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "string.escape"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "string"],
+      [6, 7, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: "equivalence class meta characters retain their identified lexical roles",
+    source: "/[[=-=]][[=]=]]/p\n",
+    captures: [
+      [0, 1, "punctuation.delimiter"],
+      [1, 3, "punctuation.bracket"],
+      [3, 4, "punctuation.delimiter"],
+      [4, 5, "character.special"],
+      [5, 6, "punctuation.delimiter"],
+      [6, 10, "punctuation.bracket"],
+      [10, 11, "punctuation.delimiter"],
+      [11, 12, "character.special"],
+      [12, 13, "punctuation.delimiter"],
+      [13, 15, "punctuation.bracket"],
+      [15, 16, "punctuation.delimiter"],
+      [16, 17, "keyword"],
+    ],
+    valid: false,
+  },
+  {
+    name: "shared range endpoints retain both operator captures",
+    source: "/[a-b-c]/p\n",
+    captures: [
+      [0, 1, "punctuation.delimiter"],
+      [1, 2, "punctuation.bracket"],
+      [2, 3, "character.special"],
+      [3, 4, "operator"],
+      [4, 5, "character.special"],
+      [5, 6, "operator"],
+      [6, 7, "character.special"],
+      [7, 8, "punctuation.bracket"],
+      [8, 9, "punctuation.delimiter"],
+      [9, 10, "keyword"],
+    ],
+    valid: false,
+  },
+  {
+    name: 'invalid class name "1" has no character capture',
+    source: "s/[[:1:]]/x/\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [6, 7, "punctuation.delimiter"],
+      [7, 9, "punctuation.bracket"],
+      [9, 10, "punctuation.delimiter"],
+      [10, 11, "string"],
+      [11, 12, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: "class-name parts around the invalid hyphen keep their captures",
+    source: "s/[[:a-b:]]/x/\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "character.special"],
+      [7, 8, "character.special"],
+      [8, 9, "punctuation.delimiter"],
+      [9, 11, "punctuation.bracket"],
+      [11, 12, "punctuation.delimiter"],
+      [12, 13, "string"],
+      [13, 14, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: 'invalid class name "α" has no character capture',
+    source: "s/[[:α:]]/x/\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [7, 8, "punctuation.delimiter"],
+      [8, 10, "punctuation.bracket"],
+      [10, 11, "punctuation.delimiter"],
+      [11, 12, "string"],
+      [12, 13, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: 'invalid class name "\\u00001" has no character capture',
+    source: "s/[[:\u00001:]]/x/\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [7, 8, "punctuation.delimiter"],
+      [8, 10, "punctuation.bracket"],
+      [10, 11, "punctuation.delimiter"],
+      [11, 12, "string"],
+      [12, 13, "punctuation.delimiter"],
+    ],
+    valid: false,
+  },
+  {
+    name: "a valid class-name prefix before NUL retains its capture",
+    source: "s/[[:a\u00001:]]/x/\n",
+    captures: [
+      [0, 1, "keyword"],
+      [1, 2, "punctuation.delimiter"],
+      [2, 4, "punctuation.bracket"],
+      [4, 5, "punctuation.delimiter"],
+      [5, 6, "character.special"],
+      [8, 9, "punctuation.delimiter"],
+      [9, 11, "punctuation.bracket"],
+      [11, 12, "punctuation.delimiter"],
+      [12, 13, "string"],
+      [13, 14, "punctuation.delimiter"],
+    ],
+    valid: false,
   },
 ];
 

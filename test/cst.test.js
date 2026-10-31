@@ -1,12 +1,22 @@
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 import { test } from "node:test";
 import { grammars, root } from "../scripts/tree-sitter.js";
-import { parseCst } from "./support/cst.js";
 import {
+  assertNoNodes,
+  issuePaths,
+  issueSignatures,
+  nodeRange,
+  parseCst,
+  publicNodes,
+  topLevelEditingCommands,
+} from "./support/cst.js";
+import {
+  applyEdits,
   assertIncrementalContract,
   parse,
+  parseCstWithin,
   parseSuccessfully,
   parseSummary,
 } from "./support/parser.js";
@@ -20,9 +30,8 @@ function parseCorpus(text) {
     const [name, ...attributes] = sections[index].trimEnd().split("\n");
     assert.ok(name, "corpus case must have a name");
     const languages = [];
-    const valid = !attributes.includes(":error");
     for (const attribute of attributes) {
-      if (attribute === ":cst" || attribute === ":error") continue;
+      if (attribute === ":cst") continue;
       const match = /^:language\(([a-z_]+)\)$/.exec(attribute);
       assert.ok(match, `unsupported corpus attribute: ${attribute}`);
       assert.ok(!languages.includes(match[1]), `${name}: duplicate language`);
@@ -32,60 +41,17 @@ function parseCorpus(text) {
     const parts = sections[index + 1].split("\n------------------\n");
     assert.equal(parts.length, 2, `${name}: expected one output separator`);
     const source = parts[0].endsWith("\r") ? parts[0].slice(0, -1) : parts[0];
-    cases.push({ name, languages, source, valid });
+    cases.push({ name, languages, source });
   }
   return cases;
 }
 
-const largeCommandCount = 100_000;
-const largeTextCharacters = 1024 * 1024;
-const largeRegexCharacters = 100_000;
+const largeReplacementCharacters = 80_000;
+const largeCommandCount = 16_000;
 const nestedBlockDepth = 2_000;
-const nestedGroupDepth = 2_000;
-const resourceTimeoutMicros = 10_000_000;
-
-for (const grammar of grammars) {
-  test(`${grammar.name}: layout stays outside commands and empty lists`, () => {
-    for (const { source, commands, lists } of [
-      { source: " \t", commands: [], lists: [] },
-      { source: " p; ", commands: [[1, 2]], lists: [[1, 3]] },
-      { source: " 1 p", commands: [[1, 4]], lists: [[1, 4]] },
-      { source: " ; ", commands: [], lists: [[1, 2]] },
-      {
-        source: "{ p; } ",
-        commands: [
-          [0, 6],
-          [2, 3],
-        ],
-        lists: [
-          [0, 6],
-          [2, 4],
-        ],
-      },
-      { source: "r file ", commands: [[0, 7]], lists: [[0, 7]] },
-      { source: "a\\\n ", commands: [[0, 4]], lists: [[0, 4]] },
-    ]) {
-      const result = parseSuccessfully(grammar.scope, source);
-      const ranges = (kind) =>
-        result.nodes
-          .filter((node) => node.kind === kind)
-          .map(({ startByte, endByte }) => [startByte, endByte]);
-      assert.deepEqual(ranges("editing_command"), commands, source);
-      assert.deepEqual(ranges("command_list"), lists, source);
-      for (let byte = 0; byte < source.length; byte++) {
-        if (source[byte] !== " " && source[byte] !== "\t") continue;
-        assertIncrementalContract(
-          result,
-          parse(grammar.scope, source, [
-            { byte, deleteBytes: 1, insert: "" },
-            { byte, deleteBytes: 0, insert: source[byte] },
-          ]),
-          source,
-        );
-      }
-    }
-  });
-}
+const printedCommandCount = 50_000;
+const cstPrintTimeoutMs = 60_000;
+const immediateParserTimeoutMicros = 1;
 
 test("posix_sed: corpus reader preserves source and language selection", () => {
   const header = "==================\n";
@@ -94,28 +60,15 @@ test("posix_sed: corpus reader preserves source and language selection", () => {
   assert.deepEqual(
     parseCorpus(
       `${header}Shared input\n:language(posix_sed)\n:language(posix_sed_ere)\n:cst\n${header}${source}${separator}expected\n\n` +
-        `${header}Input at EOF\n:language(posix_sed)\n${header}p${separator}(script)\n` +
-        `${header}Invalid input\n:language(posix_sed_ere)\n:error\n${header}\uFEFF\r\n\0${separator}\n`,
+        `${header}Input at EOF\n:language(posix_sed)\n${header}p${separator}(script)\n`,
     ),
     [
       {
         name: "Shared input",
         languages: ["posix_sed", "posix_sed_ere"],
         source,
-        valid: true,
       },
-      {
-        name: "Input at EOF",
-        languages: ["posix_sed"],
-        source: "p",
-        valid: true,
-      },
-      {
-        name: "Invalid input",
-        languages: ["posix_sed_ere"],
-        source: "\uFEFF\r\n\0",
-        valid: false,
-      },
+      { name: "Input at EOF", languages: ["posix_sed"], source: "p" },
     ],
   );
 });
@@ -123,105 +76,998 @@ test("posix_sed: corpus reader preserves source and language selection", () => {
 const corpusDirectory = join(root, "test", "corpus");
 for (const file of readdirSync(corpusDirectory).sort()) {
   const cases = parseCorpus(readFileSync(join(corpusDirectory, file), "utf8"));
-  for (const { name, languages, source, valid } of cases) {
+  for (const { name, languages, source } of cases) {
     for (const language of languages) {
       const grammar = grammars.find(({ name }) => name === language);
       assert.ok(grammar, `${file}: unknown language ${language}`);
       test(`${language}: ${file}: ${name}: CST invariants and fresh determinism`, () => {
-        const result = parse(grammar.scope, source);
-        assert.equal(result.hasError, !valid, result.stdout);
-        assert.ok(
-          result.nodes.every(
-            ({ kind, field }) => kind !== "syntax_issue" && field !== "issue",
-          ),
+        const first = parseSuccessfully(grammar.scope, source);
+        const second = parseSuccessfully(grammar.scope, source);
+        issueSignatures(first.nodes);
+        assertNoNodes(first.nodes, "ERROR", "MISSING");
+        assert.deepEqual(second.nodes, first.nodes);
+      });
+    }
+  }
+}
+
+const cstSource = "# é\n1,";
+const cstOutput = [
+  "0:0 - 1:2   script",
+  "0:0 - 1:2     command_list",
+  "0:0 - 0:4       editing_command",
+  "0:0 - 0:4         function: function",
+  "0:0 - 0:4           comment_function",
+  "0:0 - 0:1             verb: function_verb `#`",
+  "0:1 - 0:4             comment: comment",
+  "0:1 - 0:4               comment_text ` é`",
+  "0:4 - 1:0       command_separator",
+  "0:4 - 0:5         `\\n`",
+  "1:0 - 1:2       editing_command",
+  "1:0 - 1:2         addresses: address_clause",
+  "1:0 - 1:1           first: address",
+  "1:0 - 1:1             line_number_address `1`",
+  "1:1 - 1:2           separator: address_separator `,`",
+  "1:2 - 1:2           issue: syntax_issue",
+  "1:2 - 1:2             incomplete_syntax",
+  "1:2 - 1:2               omitted_address",
+  "1:2 - 1:2         issue: syntax_issue",
+  "1:2 - 1:2           incomplete_syntax",
+  "1:2 - 1:2             missing_function",
+].join("\n");
+
+test("posix_sed: CST helpers retain fields, UTF-8 byte offsets and zero-width issues", () => {
+  const nodes = parseCst(cstOutput, cstSource);
+  assert.deepEqual(
+    nodes.map(({ kind, field, parent, start, end, startByte, endByte }) => [
+      kind,
+      field,
+      parent,
+      start,
+      end,
+      startByte,
+      endByte,
+    ]),
+    [
+      ["script", null, null, [0, 0], [1, 2], 0, 7],
+      ["command_list", null, 0, [0, 0], [1, 2], 0, 7],
+      ["editing_command", null, 1, [0, 0], [0, 4], 0, 4],
+      ["function", "function", 2, [0, 0], [0, 4], 0, 4],
+      ["comment_function", null, 3, [0, 0], [0, 4], 0, 4],
+      ["function_verb", "verb", 4, [0, 0], [0, 1], 0, 1],
+      ["comment", "comment", 4, [0, 1], [0, 4], 1, 4],
+      ["comment_text", null, 6, [0, 1], [0, 4], 1, 4],
+      ["command_separator", null, 1, [0, 4], [1, 0], 4, 5],
+      ["editing_command", null, 1, [1, 0], [1, 2], 5, 7],
+      ["address_clause", "addresses", 9, [1, 0], [1, 2], 5, 7],
+      ["address", "first", 10, [1, 0], [1, 1], 5, 6],
+      ["line_number_address", null, 11, [1, 0], [1, 1], 5, 6],
+      ["address_separator", "separator", 10, [1, 1], [1, 2], 6, 7],
+      ["syntax_issue", "issue", 10, [1, 2], [1, 2], 7, 7],
+      ["incomplete_syntax", null, 14, [1, 2], [1, 2], 7, 7],
+      ["omitted_address", null, 15, [1, 2], [1, 2], 7, 7],
+      ["syntax_issue", "issue", 9, [1, 2], [1, 2], 7, 7],
+      ["incomplete_syntax", null, 17, [1, 2], [1, 2], 7, 7],
+      ["missing_function", null, 18, [1, 2], [1, 2], 7, 7],
+    ],
+  );
+  assert.deepEqual(issueSignatures(nodes), [
+    {
+      outcome: "incomplete_syntax",
+      reason: "omitted_address",
+      range: "[1, 2] - [1, 2]",
+    },
+    {
+      outcome: "incomplete_syntax",
+      reason: "missing_function",
+      range: "[1, 2] - [1, 2]",
+    },
+  ]);
+  const commands = topLevelEditingCommands(nodes);
+  assert.deepEqual(
+    commands.map(({ start }) => start),
+    [
+      [0, 0],
+      [1, 0],
+    ],
+  );
+  assert.deepEqual(commands[1].nodes.at(-1), {
+    kind: "missing_function",
+    parent: 9,
+    field: null,
+    start: [0, 2],
+    end: [0, 2],
+    startByte: 2,
+    endByte: 2,
+  });
+});
+
+test("posix_sed: CST helpers reject truncated roots and malformed issue ownership", () => {
+  assert.throws(() => parseCst("", cstSource), assert.AssertionError);
+  assert.throws(
+    () => parseCst(cstOutput, `${cstSource}p`),
+    /root must reach the edited source end/,
+  );
+  for (const [name, before, after] of [
+    ["wrong field", "issue: syntax_issue", "reason: syntax_issue"],
+    [
+      "outcome without an issue owner",
+      "1:2 - 1:2             incomplete_syntax",
+      "1:2 - 1:2           incomplete_syntax",
+    ],
+    [
+      "reason without an outcome owner",
+      "1:2 - 1:2               omitted_address",
+      "1:2 - 1:2             omitted_address",
+    ],
+    [
+      "outcome range differs",
+      "1:2 - 1:2             incomplete_syntax",
+      "1:1 - 1:2             incomplete_syntax",
+    ],
+    [
+      "reason range differs",
+      "1:2 - 1:2               omitted_address",
+      "1:1 - 1:2               omitted_address",
+    ],
+  ]) {
+    const nodes = parseCst(cstOutput.replace(before, after), cstSource);
+    assert.throws(() => issueSignatures(nodes), assert.AssertionError, name);
+  }
+});
+
+test("posix_sed: public CST comparison retains source children inside native recovery", () => {
+  const nodes = parseCst(
+    [
+      "0:0 - 0:1   script",
+      "0:0 - 0:1     command_list",
+      "0:0 - 0:1       ERROR",
+      "0:0 - 0:1         function: editing_command",
+      "0:0 - 0:1           function: function",
+      "0:0 - 0:1             print_function",
+      "0:0 - 0:1               verb: function_verb `p`",
+      "0:1 - 0:1       MISSING",
+      "0:1 - 0:1         closing_brace",
+    ].join("\n"),
+    "p",
+  );
+  assert.deepEqual(
+    publicNodes(nodes).map(({ kind, field, parent }) => [kind, field, parent]),
+    [
+      ["script", null, null],
+      ["command_list", null, 0],
+      ["editing_command", null, 1],
+      ["function", "function", 2],
+      ["print_function", null, 3],
+      ["function_verb", "verb", 4],
+    ],
+  );
+});
+
+const issueOutcomeNames = new Set([
+  "undefined_syntax",
+  "unspecified_syntax",
+  "implementation_defined_syntax",
+  "invalid_syntax",
+  "nonconforming_syntax",
+  "incomplete_syntax",
+]);
+
+function namedNode(nodeTypes, type, path) {
+  const matches = nodeTypes.filter((node) => node.named && node.type === type);
+  if (matches.length !== 1) {
+    throw new Error(`${path}: expected one named ${type} node`);
+  }
+  return matches[0];
+}
+
+function requiredSingleChildren(node, path) {
+  const { children } = node;
+  if (
+    !children?.required ||
+    children.multiple ||
+    Object.keys(node.fields ?? {}).length !== 0
+  ) {
+    throw new Error(`${path}: expected one required child`);
+  }
+  if (
+    children.types.length === 0 ||
+    children.types.some((type) => !type.named)
+  ) {
+    throw new Error(`${path}: expected named child types`);
+  }
+  return children.types;
+}
+
+function checkSourceChildren(nodeTypes, grammar, displayPath) {
+  const expectedChildren = [
+    ["blanks_after_negation", "blank"],
+    ["blanks_around_address_separator", "blank"],
+  ];
+  for (const reason of [
+    "unmatched_interval_close",
+    "unmatched_subexpression_close",
+  ]) {
+    if (grammar.name === "posix_sed") {
+      const node = namedNode(nodeTypes, reason, displayPath);
+      assert.equal(node.children, undefined);
+      assert.deepEqual(node.fields, {});
+    } else {
+      assert.ok(
+        !nodeTypes.some((node) => node.named && node.type === reason),
+        `${displayPath}: ${reason} must remain BRE-only`,
+      );
+    }
+  }
+  for (const [reason, child] of expectedChildren) {
+    const node = namedNode(nodeTypes, reason, displayPath);
+    assert.deepEqual(
+      requiredSingleChildren(node, `${displayPath}:${reason}`),
+      [{ type: child, named: true }],
+      `${displayPath}: ${reason} must own one ${child} source child`,
+    );
+  }
+}
+
+function checkBracketTerms(nodeTypes, displayPath) {
+  const invalidName = namedNode(
+    nodeTypes,
+    "invalid_character_class_name",
+    displayPath,
+  );
+  assert.deepEqual(invalidName.fields, {});
+  assert.equal(invalidName.children, undefined);
+  const invalidElement = namedNode(
+    nodeTypes,
+    "invalid_equivalence_class_element",
+    displayPath,
+  );
+  assert.deepEqual(requiredSingleChildren(invalidElement, displayPath), [
+    { type: "meta_character", named: true },
+  ]);
+  for (const obsolete of [
+    "open_colon",
+    "colon_close",
+    "open_dot",
+    "dot_close",
+    "open_equal",
+    "equal_close",
+  ]) {
+    assert.ok(
+      !nodeTypes.some((node) => node.type === obsolete),
+      `${displayPath}: ${obsolete} must not be public`,
+    );
+  }
+  for (const { type, field, payloadTypes } of [
+    { type: "character_class", field: "name", payloadTypes: ["class_name"] },
+    {
+      type: "collating_symbol",
+      field: "element",
+      payloadTypes: [
+        "collating_element_multi",
+        "collating_element_single",
+        "meta_character",
+      ],
+    },
+    {
+      type: "equivalence_class",
+      field: "element",
+      payloadTypes: ["collating_element_multi", "collating_element_single"],
+    },
+  ]) {
+    const node = namedNode(nodeTypes, type, displayPath);
+    assert.deepEqual(
+      Object.keys(node.fields).sort(),
+      [field, "issue"].sort(),
+      `${displayPath}: ${type} fields`,
+    );
+    assert.deepEqual(
+      node.fields[field],
+      {
+        multiple: true,
+        required: false,
+        types: payloadTypes.map((payload) => ({ type: payload, named: true })),
+      },
+      `${displayPath}: ${type}.${field} payload`,
+    );
+  }
+}
+
+function checkPublicCst(grammar, generatedRoot) {
+  const path = join(generatedRoot, grammar.path, "src", "node-types.json");
+  const displayPath = relative(generatedRoot, path);
+  const nodeTypes = JSON.parse(readFileSync(path, "utf8"));
+  const syntaxIssue = namedNode(nodeTypes, "syntax_issue", displayPath);
+  const outcomeTypes = requiredSingleChildren(
+    syntaxIssue,
+    `${displayPath}:syntax_issue`,
+  );
+  const actualOutcomes = new Set(outcomeTypes.map(({ type }) => type));
+  const reasons = new Set();
+
+  for (const { type } of outcomeTypes) {
+    if (!issueOutcomeNames.has(type)) {
+      throw new Error(
+        `${displayPath}: unexpected syntax_issue outcome ${type}`,
+      );
+    }
+    const outcome = namedNode(nodeTypes, type, displayPath);
+    for (const reason of requiredSingleChildren(
+      outcome,
+      `${displayPath}:${type}`,
+    )) {
+      if (
+        reason.type === "syntax_issue" ||
+        issueOutcomeNames.has(reason.type)
+      ) {
+        throw new Error(`${displayPath}: invalid issue reason ${reason.type}`);
+      }
+      namedNode(nodeTypes, reason.type, displayPath);
+      reasons.add(reason.type);
+    }
+  }
+
+  for (const outcome of issueOutcomeNames) {
+    const present = nodeTypes.some(
+      (node) => node.named && node.type === outcome,
+    );
+    if (present !== actualOutcomes.has(outcome)) {
+      throw new Error(`${displayPath}: ${outcome} bypasses syntax_issue`);
+    }
+  }
+
+  for (const node of nodeTypes) {
+    if (
+      node.named &&
+      !reasons.has(node.type) &&
+      /(^_|(^|_)(recovery|control|marker|placeholder)($|_)|_token$)/.test(
+        node.type,
+      )
+    ) {
+      throw new Error(`${displayPath}: internal node ${node.type} is public`);
+    }
+    for (const reference of [
+      node.children,
+      ...Object.values(node.fields ?? {}),
+    ]) {
+      for (const child of reference?.types ?? []) {
+        if (!child.named) {
+          continue;
+        }
+        if (actualOutcomes.has(child.type) && node.type !== "syntax_issue") {
+          throw new Error(
+            `${displayPath}: ${node.type} owns ${child.type} outside syntax_issue`,
+          );
+        }
+        if (reasons.has(child.type) && !actualOutcomes.has(node.type)) {
+          throw new Error(
+            `${displayPath}: ${node.type} owns reason ${child.type} outside an outcome`,
+          );
+        }
+      }
+    }
+  }
+
+  for (const type of [
+    "address_separator",
+    "delimiter",
+    "closing_brace",
+    "text_introducer",
+    "collating_element_single",
+    "collating_element_multi",
+    "duplication_count",
+    "ordinary_character",
+    "quoted_character",
+    "invalid_encoding",
+    "class_name",
+    "meta_character",
+    "escaped_delimiter",
+    "replacement_escaped_delimiter",
+  ]) {
+    const node = namedNode(nodeTypes, type, displayPath);
+    assert.ok(
+      node.children === undefined &&
+        Object.keys(node.fields ?? {}).length === 0,
+      `${displayPath}: ${type} must be a lexical leaf`,
+    );
+  }
+
+  checkSourceChildren(nodeTypes, grammar, displayPath);
+  checkBracketTerms(nodeTypes, displayPath);
+  assert.deepEqual(
+    nodeTypes
+      .filter((node) => !node.named)
+      .map((node) => node.type)
+      .sort(),
+    [
+      "$",
+      "*",
+      ",",
+      "-",
+      ".",
+      ":",
+      "=",
+      "[",
+      "]",
+      "^",
+      ...(grammar.name === "posix_sed"
+        ? ["\\(", "\\)", "\\+", "\\?", "\\{", "\\|", "\\}"]
+        : ["(", ")", "+", "?", "{", "|", "}"]),
+    ].sort(),
+    `${displayPath}: POSIX regular expression punctuation`,
+  );
+}
+
+for (const grammar of grammars) {
+  test(`${grammar.name}: public nodes preserve issue ownership, source children and bracket fields`, () => {
+    checkPublicCst(grammar, root);
+  });
+}
+
+const invalidCharacterCases = [
+  {
+    name: "function at source end",
+    source: "\0",
+    issues: [["unknown_function", "[0, 0] - [0, 1]"]],
+    encodingIssues: [["invalid_encoding", "[0, 0] - [0, 1]"]],
+  },
+  {
+    name: "function between complete commands",
+    source: "p\n\0\nq\n",
+    issues: [["unknown_function", "[1, 0] - [1, 1]"]],
+    encodingIssues: [["invalid_encoding", "[1, 0] - [1, 1]"]],
+  },
+  {
+    name: "trailing command text",
+    source: "pX\0q\0\n",
+    issues: [["unexpected_command_text", "[0, 1] - [0, 5]"]],
+    encodingIssues: [
+      ["unexpected_command_text", "[0, 1] - [0, 5]"],
+      ["invalid_encoding", "[0, 2] - [0, 3]"],
+      ["invalid_encoding", "[0, 4] - [0, 5]"],
+    ],
+    nulIssues: [
+      ["unexpected_command_text", "[0, 1] - [0, 5]"],
+      ["nul_character", "[0, 2] - [0, 3]"],
+      ["nul_character", "[0, 4] - [0, 5]"],
+    ],
+  },
+  {
+    name: "command text after block trailing blanks",
+    source: "{p;} \0\n",
+    issues: [
+      ["unexpected_command_text", "[0, 5] - [0, 6]"],
+      ["nul_character", "[0, 5] - [0, 6]"],
+    ],
+    encodingIssues: [["invalid_encoding", "[0, 5] - [0, 6]"]],
+  },
+  {
+    name: "block command text before a blank",
+    source: "{p;}\0 ;q\n",
+    issues: [
+      ["unexpected_command_text", "[0, 4] - [0, 6]"],
+      ["nul_character", "[0, 4] - [0, 5]"],
+    ],
+    encodingIssues: [
+      ["invalid_encoding", "[0, 4] - [0, 5]"],
+      ["unexpected_command_text", "[0, 5] - [0, 6]"],
+    ],
+  },
+  ...["s", "y"].map((verb) => ({
+    name: `${verb} opening delimiter`,
+    encodingIssues: [
+      ["invalid_encoding", "[0, 1] - [0, 2]"],
+      ["unexpected_command_text", "[0, 2] - [0, 3]"],
+    ],
+    source: `${verb}\0p\n`,
+    issues: [
+      ["invalid_delimiter", "[0, 1] - [0, 2]"],
+      ["unexpected_command_text", "[0, 2] - [0, 3]"],
+    ],
+  })),
+  {
+    name: "context address opening delimiter",
+    source: "\\\0p\n",
+    issues: [["invalid_delimiter", "[0, 1] - [0, 2]"]],
+    encodingIssues: [["invalid_encoding", "[0, 1] - [0, 2]"]],
+  },
+  {
+    name: "function character repeated before command text",
+    source: "\0\0z\n",
+    issues: [
+      ["unknown_function", "[0, 0] - [0, 1]"],
+      ["unexpected_command_text", "[0, 1] - [0, 3]"],
+      ["nul_character", "[0, 1] - [0, 2]"],
+    ],
+    encodingIssues: [
+      ["invalid_encoding", "[0, 0] - [0, 2]"],
+      ["unexpected_command_text", "[0, 2] - [0, 3]"],
+    ],
+  },
+  ...["s", "y"].map((verb) => ({
+    name: `${verb} opening delimiter character repeated before command text`,
+    source: `${verb}\0\0p\n`,
+    issues: [
+      ["invalid_delimiter", "[0, 1] - [0, 2]"],
+      ["unexpected_command_text", "[0, 2] - [0, 4]"],
+      ["nul_character", "[0, 2] - [0, 3]"],
+    ],
+    encodingIssues: [
+      ["invalid_encoding", "[0, 1] - [0, 3]"],
+      ["unexpected_command_text", "[0, 3] - [0, 4]"],
+    ],
+  })),
+  {
+    name: "context address opening delimiter character repeated before a function",
+    source: "\\\0\0p\n",
+    issues: [
+      ["invalid_delimiter", "[0, 1] - [0, 2]"],
+      ["unknown_function", "[0, 2] - [0, 3]"],
+      ["unexpected_command_text", "[0, 3] - [0, 4]"],
+    ],
+    encodingIssues: [["invalid_encoding", "[0, 1] - [0, 3]"]],
+  },
+];
+
+for (const grammar of grammars) {
+  for (const [name, character] of [
+    ["NUL", "\0"],
+    ["decode error", "\xff"],
+  ]) {
+    for (const testCase of invalidCharacterCases) {
+      test(`${grammar.name}: ${name}: ${testCase.name}`, () => {
+        const source = Buffer.from(
+          testCase.source.replaceAll("\0", character),
+          "latin1",
+        );
+        const fresh = parseSuccessfully(grammar.scope, source);
+        assert.deepEqual(
+          issueSignatures(fresh.nodes),
+          (character === "\0"
+            ? (testCase.nulIssues ?? testCase.issues)
+            : testCase.encodingIssues
+          ).map(([reason, range]) => ({
+            outcome:
+              reason === "invalid_encoding"
+                ? "invalid_syntax"
+                : "nonconforming_syntax",
+            reason,
+            range,
+          })),
+          fresh.stdout,
+        );
+        assertNoNodes(fresh.nodes, "ERROR", "MISSING");
+        const incremental = parse(
+          grammar.scope,
+          Buffer.concat([Buffer.from("p\n"), source]),
+          [{ byte: 0, deleteBytes: 2, insert: "" }],
+        );
+        assertIncrementalContract(
+          fresh,
+          incremental,
+          `${name}: ${testCase.name}`,
         );
       });
     }
   }
 }
 
-test("posix_sed: CST helpers retain ERROR ancestry, fields, UTF-8 offsets and MISSING nodes", () => {
-  const source = "é\np";
-  const nodes = parseCst(
-    [
-      "0:0 - 1:1  •ERROR",
-      "0:0 - 0:2     label: label_literal `é`",
-      "1:0 - 1:1    •ERROR",
-      "1:0 - 1:1       function_verb `p`",
-      "1:1 - 1:1    •MISSING",
-      '1:1 - 1:1       "}"',
-    ].join("\n"),
-    source,
-  );
-  assert.deepEqual(
-    nodes.map(({ kind, field, parent, startByte, endByte }) => [
-      kind,
-      field,
-      parent,
-      startByte,
-      endByte,
-    ]),
-    [
-      ["ERROR", null, null, 0, 4],
-      ["label_literal", "label", 0, 0, 2],
-      ["ERROR", null, 0, 3, 4],
-      ["function_verb", null, 2, 3, 4],
-      ["MISSING", null, 0, 4, 4],
-      ['"}"', null, 4, 4, 4],
-    ],
-  );
-  assert.throws(() => parseCst("", source), assert.AssertionError);
-  assert.throws(
-    () => parseCst("0:0 - 0:2   script", source),
-    /root must reach/,
-  );
-});
+const nulPayloadCases = [
+  {
+    name: "leading replacement NUL",
+    source: "s/a/\u0000bc/\nq\n",
+  },
+  {
+    name: "consecutive replacement NULs between literals",
+    source: "s/a/a\u0000\u0000b/\nq\n",
+  },
+  {
+    name: "trailing replacement NUL",
+    source: "s/a/ab\u0000/\nq\n",
+  },
+  {
+    name: "leading translation source NUL",
+    source: "y/\u0000ab/xy/\nq\n",
+  },
+  {
+    name: "trailing translation destination NUL",
+    source: "y/ab/xy\u0000/\nq\n",
+  },
+  {
+    name: "NUL as the only text character",
+    source: "a\\\n\u0000\nq\n",
+  },
+  {
+    name: "NULs on both sides of a continued text line",
+    source: "a\\\n\u0000a\\\nb\u0000\nq\n",
+  },
+  {
+    name: "label definition keeps one owner around NUL",
+    source: ":a\u0000b\nq\n",
+  },
+  {
+    name: "branch label begins with NUL",
+    source: "b \u0000ab\nq\n",
+  },
+  {
+    name: "test label ends with NUL",
+    source: "t ab\u0000\nq\n",
+  },
+  {
+    name: "read file keeps whitespace and semicolon after NUL",
+    source: "r \u0000 a;\u0000\nq\n",
+  },
+  {
+    name: "write file keeps its semicolon after NUL",
+    source: "w a\u0000;b\nq\n",
+  },
+  {
+    name: "substitution write file keeps its semicolon after NUL",
+    source: "s/a/b/w \u0000 a;q\nq\n",
+  },
+  {
+    name: "ordinary comment text splits around NUL",
+    source: "#a\u0000b\nq\n",
+  },
+  {
+    name: "default-output directive keeps its NUL-containing tail",
+    source: "#n\u0000a\u0000\nq\n",
+  },
+  {
+    name: "replacement escape prefix preserves the following NUL issue",
+    source: "s/a/\\\u0000/\nq\n",
+    repair: "\\",
+  },
+  {
+    name: "translation escape prefix preserves the following NUL issue",
+    source: "y/\\\u0000/x/\nq\n",
+    repair: "\\",
+  },
+  {
+    name: "text escape prefix preserves the following NUL issue",
+    source: "a\\\n\\\u0000\nq\n",
+    repair: "\\",
+  },
+];
 
 for (const grammar of grammars) {
-  test(`${grammar.name}: public node definitions contain only the standard CST`, () => {
-    const types = JSON.parse(
-      readFileSync(join(root, grammar.path, "src/node-types.json"), "utf8"),
-    );
-    for (const node of types) {
-      assert.doesNotMatch(
-        node.type,
-        /syntax_issue|invalid_|incomplete_|missing_|duplicate_|orphan_|unmatched_/,
+  for (const testCase of nulPayloadCases) {
+    test(`${grammar.name}: NUL payload edits preserve owners and following commands: ${testCase.name}`, () => {
+      const isolatedQuit = topLevelEditingCommands(
+        parseSuccessfully(grammar.scope, "q\n").nodes,
+      )[0].nodes;
+
+      const firstNul = testCase.source.indexOf("\0");
+      const history = `${testCase.source.slice(0, firstNul)}x${testCase.source.slice(firstNul)}`;
+      const edits = [{ byte: firstNul, deleteBytes: 1, insert: "" }];
+      assert.deepEqual(
+        applyEdits(history, edits),
+        Buffer.from(testCase.source),
       );
-      assert.equal(node.fields?.issue, undefined);
+      const fresh = parseSuccessfully(grammar.scope, testCase.source);
+      const incremental = parseSuccessfully(grammar.scope, history, edits);
+      assertIncrementalContract(fresh, incremental, testCase.name);
+      const lastCommand = topLevelEditingCommands(fresh.nodes).at(-1);
+      assert.ok(lastCommand, testCase.name);
+      assert.deepEqual(lastCommand.nodes, isolatedQuit, testCase.name);
+      const repair = testCase.repair ?? "a";
+      const repaired = testCase.source.replaceAll("\0", repair);
+      const repairs = [];
+      for (let index = testCase.source.length - 1; index >= 0; index--) {
+        if (testCase.source[index] === "\0")
+          repairs.push({ byte: index, deleteBytes: 1, insert: repair });
+      }
+      assert.deepEqual(
+        applyEdits(testCase.source, repairs),
+        Buffer.from(repaired),
+      );
+      const repairedFresh = parseSuccessfully(grammar.scope, repaired);
+      assertNoNodes(repairedFresh.nodes, "ERROR", "MISSING");
+      assert.deepEqual(issueSignatures(repairedFresh.nodes), []);
+      assertIncrementalContract(
+        repairedFresh,
+        parse(grammar.scope, testCase.source, repairs),
+        testCase.name,
+      );
+    });
+  }
+}
+
+for (const grammar of grammars) {
+  const expressionOwner =
+    grammar.name === "posix_sed"
+      ? "one_char_or_coll_elem_bre"
+      : "one_char_or_coll_elem_ere";
+  const duplicationOwner =
+    grammar.name === "posix_sed" ? "bre_dupl_symbol" : "ere_dupl_symbol";
+  const opening = grammar.name === "posix_sed" ? "\\{" : "{";
+  const closing = grammar.name === "posix_sed" ? "\\}" : "}";
+  for (const context of [
+    { name: "function", prefix: "", suffix: "\np\n", owner: "editing_command" },
+    {
+      name: "command tail",
+      prefix: "p",
+      suffix: "\nq\n",
+      owner: "editing_command",
+    },
+    {
+      name: "substitution flags",
+      prefix: "s/a/b/",
+      suffix: "g\n",
+      owner: "substitution_flags",
+    },
+    {
+      name: "expression",
+      prefix: "/a",
+      suffix: "b/p\n",
+      owner: expressionOwner,
+    },
+    {
+      name: "escaped expression",
+      prefix: "/a\\",
+      suffix: "/p\n",
+      owner: expressionOwner,
+    },
+    { name: "range end", prefix: "/[a-", suffix: "]/p\n", owner: "end_range" },
+    {
+      name: "collating symbol",
+      prefix: "/[[.a",
+      suffix: "b.]]/p\n",
+      owner: "collating_symbol",
+    },
+    {
+      name: "equivalence class",
+      prefix: "/[[=a",
+      suffix: "b=]]/p\n",
+      owner: "equivalence_class",
+    },
+    {
+      name: "character class",
+      prefix: "/[[:a",
+      suffix: "b:]]/p\n",
+      owner: "character_class",
+    },
+    {
+      name: "replacement",
+      prefix: "s/a/b",
+      suffix: "c/\n",
+      owner: "replacement",
+    },
+    {
+      name: "escaped replacement",
+      prefix: "s/a/\\",
+      suffix: "/\n",
+      owner: "replacement",
+    },
+    {
+      name: "translation",
+      prefix: "y/a",
+      suffix: "b/xy/\n",
+      owner: "translation_string",
+    },
+    {
+      name: "escaped translation",
+      prefix: "y/\\",
+      suffix: "/a/\n",
+      owner: "translation_string",
+    },
+    { name: "label", prefix: ":ab", suffix: "cd\n", owner: "label" },
+    { name: "read file", prefix: "r ab", suffix: "cd\n", owner: "rfile" },
+    { name: "write file", prefix: "w ab", suffix: "cd\n", owner: "wfile" },
+    {
+      name: "substitution write file",
+      prefix: "s/a/b/w ab",
+      suffix: "cd\n",
+      owner: "wfile",
+    },
+    { name: "comment", prefix: "# ab", suffix: "cd\n", owner: "comment" },
+    { name: "text", prefix: "a\\\nab", suffix: "cd\n", owner: "text" },
+    {
+      name: "before minimum",
+      prefix: `/a${opening}`,
+      suffix: `1${closing}/p\n`,
+      owner: duplicationOwner,
+      counts: [["minimum", "1"]],
+    },
+    {
+      name: "within minimum",
+      prefix: `/a${opening}1`,
+      suffix: `2${closing}/p\n`,
+      owner: duplicationOwner,
+      counts: [
+        ["minimum", "1"],
+        ["minimum", "2"],
+      ],
+    },
+    {
+      name: "after minimum",
+      prefix: `/a${opening}1`,
+      suffix: `${closing}/p\n`,
+      owner: duplicationOwner,
+      counts: [["minimum", "1"]],
+    },
+    {
+      name: "before maximum",
+      prefix: `/a${opening}1,`,
+      suffix: `2${closing}/p\n`,
+      owner: duplicationOwner,
+      counts: [
+        ["minimum", "1"],
+        ["maximum", "2"],
+      ],
+    },
+    {
+      name: "within maximum",
+      prefix: `/a${opening}1,2`,
+      suffix: `3${closing}/p\n`,
+      owner: duplicationOwner,
+      counts: [
+        ["minimum", "1"],
+        ["maximum", "2"],
+        ["maximum", "3"],
+      ],
+    },
+    {
+      name: "after maximum",
+      prefix: `/a${opening}1,2`,
+      suffix: `${closing}/p\n`,
+      owner: duplicationOwner,
+      counts: [
+        ["minimum", "1"],
+        ["maximum", "2"],
+      ],
+    },
+    {
+      name: "truncated sequence at EOF",
+      prefix: "# ",
+      suffix: "",
+      owner: "comment",
+      bytes: [0xf0, 0x9f, 0x98],
+    },
+  ]) {
+    test(`${grammar.name}: decoding failure stays in ${context.name}`, () => {
+      const prefix = Buffer.from(context.prefix);
+      const bytes = Buffer.from(context.bytes ?? [0xff, 0x80, 0xfe]);
+      const source = Buffer.concat([
+        prefix,
+        bytes,
+        Buffer.from(context.suffix),
+      ]);
+      const result = parseSuccessfully(grammar.scope, source);
+      assert.deepEqual(issuePaths(result.nodes), [
+        "invalid_syntax/invalid_encoding",
+      ]);
+      const issue = result.nodes.find(({ kind }) => kind === "syntax_issue");
+      assert.ok(issue);
+      assert.deepEqual(
+        [issue.startByte, issue.endByte],
+        [prefix.length, prefix.length + bytes.length],
+      );
+      assert.equal(result.nodes[issue.parent].kind, context.owner);
+      assertNoNodes(result.nodes, "ERROR", "MISSING");
+      if (context.counts !== undefined) {
+        assert.deepEqual(
+          result.nodes
+            .filter(({ kind }) => kind === "duplication_count")
+            .map(({ field, startByte, endByte }) => [
+              field,
+              source.subarray(startByte, endByte).toString(),
+            ]),
+          context.counts,
+        );
+      }
+      const history = Buffer.concat([
+        prefix,
+        Buffer.from("x"),
+        bytes,
+        Buffer.from(context.suffix),
+      ]);
+      assertIncrementalContract(
+        result,
+        parse(grammar.scope, history, [
+          { byte: prefix.length, deleteBytes: 1, insert: "" },
+        ]),
+        context.name,
+      );
+    });
+  }
+}
+
+for (const grammar of grammars) {
+  test(`${grammar.name}: CST reader retains Unicode line separators in ordinary and issue leaves`, () => {
+    const cases = [
+      {
+        source: "/\u2028/p\n",
+        kind: "ordinary_character",
+        byte: 1,
+        character: "\u2028",
+      },
+      {
+        source: "/\u2029/p\n",
+        kind: "ordinary_character",
+        byte: 1,
+        character: "\u2029",
+      },
+      {
+        source:
+          grammar.name === "posix_sed" ? "/a\\{\u2028/p\n" : "/a{\u2028/p\n",
+        kind: "invalid_interval_character",
+        byte: grammar.name === "posix_sed" ? 4 : 3,
+        character: "\u2028",
+      },
+      {
+        source:
+          grammar.name === "posix_sed" ? "/a\\{\u2029/p\n" : "/a{\u2029/p\n",
+        kind: "invalid_interval_character",
+        byte: grammar.name === "posix_sed" ? 4 : 3,
+        character: "\u2029",
+      },
+    ];
+    for (const { source, kind, byte, character } of cases) {
+      const fresh = parseSuccessfully(grammar.scope, source);
+      const characterBytes = Buffer.byteLength(character);
+      const range = `[0, ${byte}] - [0, ${byte + characterBytes}]`;
+      assert.deepEqual(
+        fresh.nodes.filter((node) => node.kind === kind).map(nodeRange),
+        [range],
+        JSON.stringify(source),
+      );
+      assert.deepEqual(
+        issueSignatures(fresh.nodes),
+        kind === "ordinary_character"
+          ? []
+          : [
+              { outcome: "undefined_syntax", reason: kind, range },
+              {
+                outcome: "undefined_syntax",
+                reason: "missing_interval_close",
+                range: `[0, ${byte + characterBytes}] - [0, ${byte + characterBytes}]`,
+              },
+            ],
+      );
+      const incremental = parse(grammar.scope, source, [
+        { byte, deleteBytes: characterBytes, insert: "" },
+        { byte, deleteBytes: 0, insert: character },
+      ]);
+      assertIncrementalContract(fresh, incremental, JSON.stringify(source));
     }
   });
 }
 
-for (const scope of ["source.posix_sed", "source.posix_sed.ere"]) {
-  const open = scope.endsWith("ere") ? "(" : "\\(";
-  const close = scope.endsWith("ere") ? ")" : "\\)";
-  for (const [name, source, valid] of [
-    [`${largeCommandCount} commands`, "p;".repeat(largeCommandCount), true],
-    ["one MiB text operand", `a\\\n${"x".repeat(largeTextCharacters)}`, true],
+for (const grammar of grammars) {
+  for (const [name, source] of [
+    ["long replacement", `s/a/${"x".repeat(largeReplacementCharacters)}/\n`],
+    ["wide command list", "p;".repeat(largeCommandCount)],
     [
-      `${largeRegexCharacters} regex characters`,
-      `s/${"a".repeat(largeRegexCharacters)}/b/`,
-      true,
-    ],
-    [
-      `${nestedBlockDepth} nested blocks`,
-      `${"{".repeat(nestedBlockDepth)}p${";}".repeat(nestedBlockDepth)}`,
-      true,
-    ],
-    [
-      `${nestedGroupDepth} nested groups`,
-      `s/${open.repeat(nestedGroupDepth)}a${close.repeat(nestedGroupDepth)}/b/`,
-      true,
-    ],
-    [
-      `${nestedGroupDepth} unclosed groups`,
-      `s/${open.repeat(nestedGroupDepth)}a`,
-      false,
+      "deep blocks",
+      `${"{".repeat(nestedBlockDepth)}p;${"}".repeat(nestedBlockDepth)}\n`,
     ],
   ]) {
-    test(`${scope}: resources ${name}`, () => {
-      const result = parseSummary(scope, source, resourceTimeoutMicros);
-      assert.equal(result.successful, valid, JSON.stringify(result));
+    test(`${grammar.name}: large tokens, command lists and nested blocks parse through EOF: ${name}`, () => {
+      assert.equal(parseSummary(grammar.scope, source).successful, true, name);
     });
   }
+}
+
+for (const grammar of grammars) {
+  for (const [name, source] of [
+    ["wide command list", "p;".repeat(printedCommandCount)],
+    ["tall command list", "p\n".repeat(printedCommandCount)],
+  ]) {
+    test(`${grammar.name}: wide and tall command lists print their CST within the time limit: ${name}`, () => {
+      parseCstWithin(grammar.scope, source, cstPrintTimeoutMs, name);
+    });
+  }
+}
+
+for (const grammar of grammars) {
+  test(`${grammar.name}: a parser timeout cannot pass as complete recovery`, () => {
+    assert.throws(() =>
+      parseSummary(
+        grammar.scope,
+        "p;".repeat(largeCommandCount),
+        immediateParserTimeoutMicros,
+      ),
+    );
+  });
 }

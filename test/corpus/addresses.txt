@@ -127,468 +127,1413 @@ $ q
     (command_separator)))
 
 ==================
-rejects address syntax (BRE): "1! p\n"
+classifies blanks after address negation
 :language(posix_sed)
-:error
 ==================
 1! p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address)))
+      (negation
+        (negation_operator)
+        (syntax_issue
+          (unspecified_syntax
+            (blanks_after_negation
+              (blank)))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax: ",p\n"
+Both omitted addresses retain their separator
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 ,p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:2       editing_command
+0:0 - 0:1         addresses: address_clause
+0:0 - 0:0           issue: syntax_issue
+0:0 - 0:0             undefined_syntax
+0:0 - 0:0               omitted_address
+0:0 - 0:1           separator: address_separator `,`
+0:1 - 0:1           issue: syntax_issue
+0:1 - 0:1             undefined_syntax
+0:1 - 0:1               omitted_address
+0:1 - 0:2         function: function
+0:1 - 0:2           print_function
+0:1 - 0:2             verb: function_verb `p`
+0:2 - 1:0       command_separator
+0:2 - 0:3         `\n`
+
 ==================
-rejects address syntax: "1,2q\n"
+An excess address unit owns its separator and address
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1,2q
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:3           issue: syntax_issue
+0:1 - 0:3             nonconforming_syntax
+0:1 - 0:3               excess_address
+0:1 - 0:2                 separator: address_separator `,`
+0:2 - 0:3                 address: address
+0:2 - 0:3                   line_number_address `2`
+0:3 - 0:4         function: function
+0:3 - 0:4           quit_function
+0:3 - 0:4             verb: function_verb `q`
+0:4 - 1:0       command_separator
+0:4 - 0:5         `\n`
+
 ==================
-rejects address syntax (BRE): "1,2/\np\n"
+recovers an unterminated excess context address at a newline
 :language(posix_sed)
-:error
 ==================
 1,2/
 p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (address_separator)
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (syntax_issue
+                (nonconforming_syntax
+                  (missing_address_separator)))
+              (address
+                (context_address
+                  (delimiter)
+                  (syntax_issue
+                    (nonconforming_syntax
+                      (unterminated_regular_expression)))))))))
+      (syntax_issue
+        (nonconforming_syntax
+          (missing_function))))
+    (command_separator)
+    (editing_command
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "!!p\n"
+Duplicate negation owns its operator leaf
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 !!p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:2         negation: negation
+0:0 - 0:1           operator: negation_operator `!`
+0:1 - 0:2           issue: syntax_issue
+0:1 - 0:2             nonconforming_syntax
+0:1 - 0:2               duplicate_negation
+0:1 - 0:2                 operator: negation_operator `!`
+0:2 - 0:3         function: function
+0:2 - 0:3           print_function
+0:2 - 0:3             verb: function_verb `p`
+0:3 - 1:0       command_separator
+0:3 - 0:4         `\n`
+
 ==================
-rejects address syntax (BRE): "! !p\n"
+owns a duplicate negation operator after a blank
 :language(posix_sed)
-:error
 ==================
 ! !p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (negation
+        (negation_operator)
+        (syntax_issue
+          (unspecified_syntax
+            (blanks_after_negation
+              (blank))))
+        (syntax_issue
+          (nonconforming_syntax
+            (duplicate_negation
+              (negation_operator)))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "!!! p\n"
+owns repeated negation operators before a blank
 :language(posix_sed)
-:error
 ==================
 !!! p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (negation
+        (negation_operator)
+        (syntax_issue
+          (nonconforming_syntax
+            (duplicate_negation
+              (negation_operator))))
+        (syntax_issue
+          (nonconforming_syntax
+            (duplicate_negation
+              (negation_operator))))
+        (syntax_issue
+          (unspecified_syntax
+            (blanks_after_negation
+              (blank)))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "1:x\n"
+An address before a label belongs to an excess-address issue
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1:x
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:1         addresses: address_clause
+0:0 - 0:1           issue: syntax_issue
+0:0 - 0:1             nonconforming_syntax
+0:0 - 0:1               excess_address
+0:0 - 0:1                 address: address
+0:0 - 0:1                   line_number_address `1`
+0:1 - 0:3         function: function
+0:1 - 0:3           label_function
+0:1 - 0:2             verb: function_verb `:`
+0:2 - 0:3             label: label
+0:2 - 0:3               label_literal `x`
+0:3 - 1:0       command_separator
+0:3 - 0:4         `\n`
+
 ==================
-rejects address syntax (BRE): "1,2:x\n"
+classifies an excess address range before a label function
 :language(posix_sed)
-:error
 ==================
 1,2:x
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address
+                (line_number_address)))))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address_separator)
+              (address
+                (line_number_address))))))
+      (function
+        (label_function
+          (function_verb)
+          (label
+            (label_literal)))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "1,2=\n"
+classifies an excess address before a line-number function
 :language(posix_sed)
-:error
 ==================
 1,2=
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address_separator)
+              (address
+                (line_number_address))))))
+      (function
+        (line_number_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "1,2,3p\n"
+A third address retains its separator inside an excess issue
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1,2,3p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:3           second: address
+0:2 - 0:3             line_number_address `2`
+0:3 - 0:5           issue: syntax_issue
+0:3 - 0:5             nonconforming_syntax
+0:3 - 0:5               excess_address
+0:3 - 0:4                 separator: address_separator `,`
+0:4 - 0:5                 address: address
+0:4 - 0:5                   line_number_address `3`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
 ==================
-rejects address syntax (BRE): "1,2,3,4w f\n"
+classifies two excess addresses before a write function
 :language(posix_sed)
-:error
 ==================
 1,2,3,4w f
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (address_separator)
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address_separator)
+              (address
+                (line_number_address)))))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address_separator)
+              (address
+                (line_number_address))))))
+      (function
+        (write_function
+          (function_verb)
+          (wfile
+            (file_literal)))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "1 2:x\n"
+Blank-separated addresses remain excess before a label at a newline
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1 2:x
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:1           issue: syntax_issue
+0:0 - 0:1             nonconforming_syntax
+0:0 - 0:1               excess_address
+0:0 - 0:1                 address: address
+0:0 - 0:1                   line_number_address `1`
+0:1 - 0:3           issue: syntax_issue
+0:1 - 0:3             nonconforming_syntax
+0:1 - 0:3               excess_address
+0:1 - 0:1                 issue: syntax_issue
+0:1 - 0:1                   nonconforming_syntax
+0:1 - 0:1                     missing_address_separator
+0:2 - 0:3                 address: address
+0:2 - 0:3                   line_number_address `2`
+0:3 - 0:5         function: function
+0:3 - 0:5           label_function
+0:3 - 0:4             verb: function_verb `:`
+0:4 - 0:5             label: label
+0:4 - 0:5               label_literal `x`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
+
 ==================
-rejects address syntax (BRE): "1 2#x\n"
+classifies blank-separated excess addresses before a comment function
 :language(posix_sed)
-:error
 ==================
 1 2#x
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address
+                (line_number_address)))))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (syntax_issue
+                (nonconforming_syntax
+                  (missing_address_separator)))
+              (address
+                (line_number_address))))))
+      (function
+        (comment_function
+          (function_verb)
+          (comment
+            (comment_text)))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "1 2q\n"
+classifies a blank-separated excess address before a quit function
 :language(posix_sed)
-:error
 ==================
 1 2q
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (syntax_issue
+                (nonconforming_syntax
+                  (missing_address_separator)))
+              (address
+                (line_number_address))))))
+      (function
+        (quit_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "1,2 3p\n"
+classifies a blank-separated third address before a print function
 :language(posix_sed)
-:error
 ==================
 1,2 3p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (address_separator)
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (syntax_issue
+                (nonconforming_syntax
+                  (missing_address_separator)))
+              (address
+                (line_number_address))))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "1,q\n"
+An excess address unit retains a nested omission
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1,q
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           issue: syntax_issue
+0:1 - 0:2             nonconforming_syntax
+0:1 - 0:2               excess_address
+0:1 - 0:2                 separator: address_separator `,`
+0:2 - 0:2                 issue: syntax_issue
+0:2 - 0:2                   undefined_syntax
+0:2 - 0:2                     omitted_address
+0:2 - 0:3         function: function
+0:2 - 0:3           quit_function
+0:2 - 0:3             verb: function_verb `q`
+0:3 - 1:0       command_separator
+0:3 - 0:4         `\n`
+
 ==================
-rejects address syntax (BRE): ",2q\n"
+keeps an omitted leading address before an excess address
 :language(posix_sed)
-:error
 ==================
 ,2q
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (syntax_issue
+          (undefined_syntax
+            (omitted_address)))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address_separator)
+              (address
+                (line_number_address))))))
+      (function
+        (quit_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): ",q\n"
+keeps an omitted leading address before an omitted excess address
 :language(posix_sed)
-:error
 ==================
 ,q
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (syntax_issue
+          (undefined_syntax
+            (omitted_address)))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address_separator)
+              (syntax_issue
+                (undefined_syntax
+                  (omitted_address)))))))
+      (function
+        (quit_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "1,2 ,3p\n"
+owns a blank before an excess address separator
 :language(posix_sed)
-:error
 ==================
 1,2 ,3p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (address_separator)
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (syntax_issue
+                (nonconforming_syntax
+                  (blanks_around_address_separator
+                    (blank))))
+              (address_separator)
+              (address
+                (line_number_address))))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "1,2!q;p\n"
+keeps an excess address before negation and a following command
 :language(posix_sed)
-:error
 ==================
 1,2!q;p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (address_separator)
+              (address
+                (line_number_address))))))
+      (negation
+        (negation_operator))
+      (function
+        (quit_function
+          (function_verb))))
+    (command_separator)
+    (editing_command
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "{1,2q\n}\n"
+keeps an excess address inside a block command
 :language(posix_sed)
-:error
 ==================
 {1,2q
 }
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (function
+        (block_function
+          (function_verb)
+          (command_list
+            (editing_command
+              (address_clause
+                (address
+                  (line_number_address))
+                (syntax_issue
+                  (nonconforming_syntax
+                    (excess_address
+                      (address_separator)
+                      (address
+                        (line_number_address))))))
+              (function
+                (quit_function
+                  (function_verb))))
+            (command_separator))
+          (closing_brace))))
+    (command_separator)))
+
 ==================
-rejects address syntax: ",2p\n"
+An omitted leading address retains the second address
 :language(posix_sed_ere)
 :language(posix_sed)
-:error
+:cst
 ==================
 ,2p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:0           issue: syntax_issue
+0:0 - 0:0             undefined_syntax
+0:0 - 0:0               omitted_address
+0:0 - 0:1           separator: address_separator `,`
+0:1 - 0:2           second: address
+0:1 - 0:2             line_number_address `2`
+0:2 - 0:3         function: function
+0:2 - 0:3           print_function
+0:2 - 0:3             verb: function_verb `p`
+0:3 - 1:0       command_separator
+0:3 - 0:4         `\n`
+
 ==================
-rejects address syntax: "1,p\n"
+An omitted second address belongs to its address clause
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1,p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:2           issue: syntax_issue
+0:2 - 0:2             undefined_syntax
+0:2 - 0:2               omitted_address
+0:2 - 0:3         function: function
+0:2 - 0:3           print_function
+0:2 - 0:3             verb: function_verb `p`
+0:3 - 1:0       command_separator
+0:3 - 0:4         `\n`
+
 ==================
-rejects address syntax (BRE): "1 ,2p\n"
+keeps an address separator after a nonconforming blank
 :language(posix_sed)
-:error
 ==================
 1 ,2p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (blanks_around_address_separator
+              (blank))))
+        (address_separator)
+        (address
+          (line_number_address)))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "1, 2p\n"
+keeps an address separator before a nonconforming blank
 :language(posix_sed)
-:error
 ==================
 1, 2p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (address_separator)
+        (syntax_issue
+          (nonconforming_syntax
+            (blanks_around_address_separator
+              (blank))))
+        (address
+          (line_number_address)))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "1 , 2p\n"
+Blank runs on both sides of a separator remain independent
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1 , 2p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           issue: syntax_issue
+0:1 - 0:2             nonconforming_syntax
+0:1 - 0:2               blanks_around_address_separator
+0:1 - 0:2                 blank ` `
+0:2 - 0:3           separator: address_separator `,`
+0:3 - 0:4           issue: syntax_issue
+0:3 - 0:4             nonconforming_syntax
+0:3 - 0:4               blanks_around_address_separator
+0:3 - 0:4                 blank ` `
+0:4 - 0:5           second: address
+0:4 - 0:5             line_number_address `2`
+0:5 - 0:6         function: function
+0:5 - 0:6           print_function
+0:5 - 0:6             verb: function_verb `p`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
 ==================
-rejects address syntax (BRE): "1 2p\n"
+classifies a missing separator between line-number addresses
 :language(posix_sed)
-:error
 ==================
 1 2p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (missing_address_separator)))
+        (address
+          (line_number_address)))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): "1/ab/p\n"
+classifies a missing separator before a context address
 :language(posix_sed)
-:error
 ==================
 1/ab/p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (missing_address_separator)))
+        (address
+          (context_address
+            (delimiter)
+            (basic_reg_exp
+              (bre_branch
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))
+                (bre_expression
+                  (simple_bre
+                    (nondupl_bre
+                      (one_char_or_coll_elem_bre
+                        (ordinary_character)))))))
+            (delimiter))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): ",1$p\n"
+keeps an omitted leading address before an excess last-line address
 :language(posix_sed)
-:error
 ==================
 ,1$p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (syntax_issue
+          (undefined_syntax
+            (omitted_address)))
+        (address_separator)
+        (address
+          (line_number_address))
+        (syntax_issue
+          (nonconforming_syntax
+            (excess_address
+              (syntax_issue
+                (nonconforming_syntax
+                  (missing_address_separator)))
+              (address
+                (last_line_address))))))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax (BRE): ", 1p\n"
+keeps an address separator between an omission and a nonconforming blank
 :language(posix_sed)
-:error
 ==================
 , 1p
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (syntax_issue
+          (undefined_syntax
+            (omitted_address)))
+        (address_separator)
+        (syntax_issue
+          (nonconforming_syntax
+            (blanks_around_address_separator
+              (blank))))
+        (address
+          (line_number_address)))
+      (function
+        (print_function
+          (function_verb))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "1, p\n"
+Blanks before the function follow an omitted second address
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1, p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:2           issue: syntax_issue
+0:2 - 0:2             undefined_syntax
+0:2 - 0:2               omitted_address
+0:3 - 0:4         function: function
+0:3 - 0:4           print_function
+0:3 - 0:4             verb: function_verb `p`
+0:4 - 1:0       command_separator
+0:4 - 0:5         `\n`
+
 ==================
-rejects address syntax: "1 , p\n"
+A function blank after an omitted address is outside the address clause
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1 , p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           issue: syntax_issue
+0:1 - 0:2             nonconforming_syntax
+0:1 - 0:2               blanks_around_address_separator
+0:1 - 0:2                 blank ` `
+0:2 - 0:3           separator: address_separator `,`
+0:3 - 0:3           issue: syntax_issue
+0:3 - 0:3             undefined_syntax
+0:3 - 0:3               omitted_address
+0:4 - 0:5         function: function
+0:4 - 0:5           print_function
+0:4 - 0:5             verb: function_verb `p`
+0:5 - 1:0       command_separator
+0:5 - 0:6         `\n`
+
 ==================
-rejects address syntax: "1"
+A final address has a missing function
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1
 ------------------
 
+0:0 - 0:1   script
+0:0 - 0:1     command_list
+0:0 - 0:1       editing_command
+0:0 - 0:1         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:1         issue: syntax_issue
+0:1 - 0:1           incomplete_syntax
+0:1 - 0:1             missing_function
+
 ==================
-rejects address syntax (ERE): "!"
+preserves final negation without synthesizing a function
 :language(posix_sed_ere)
-:error
 ==================
 !
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (negation
+        (negation_operator))
+      (syntax_issue
+        (incomplete_syntax
+          (missing_function))))))
+
 ==================
-rejects address syntax (BRE): "1\n"
+classifies a missing function after an address at a newline
 :language(posix_sed)
-:error
 ==================
 1
 
 ------------------
 
+(script
+  (command_list
+    (editing_command
+      (address_clause
+        (address
+          (line_number_address)))
+      (syntax_issue
+        (nonconforming_syntax
+          (missing_function))))
+    (command_separator)))
+
 ==================
-rejects address syntax: "1,"
+An omitted final address attaches after its separator
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1,
 ------------------
 
+0:0 - 0:2   script
+0:0 - 0:2     command_list
+0:0 - 0:2       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:2           issue: syntax_issue
+0:2 - 0:2             incomplete_syntax
+0:2 - 0:2               omitted_address
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           incomplete_syntax
+0:2 - 0:2             missing_function
+
 ==================
-rejects address syntax: "1,\np\n"
+A newline makes address omission and missing function non-incomplete
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1,
 p
 
 ------------------
 
+0:0 - 2:0   script
+0:0 - 2:0     command_list
+0:0 - 0:2       editing_command
+0:0 - 0:2         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:2           issue: syntax_issue
+0:2 - 0:2             undefined_syntax
+0:2 - 0:2               omitted_address
+0:2 - 0:2         issue: syntax_issue
+0:2 - 0:2           nonconforming_syntax
+0:2 - 0:2             missing_function
+0:2 - 1:0       command_separator
+0:2 - 0:3         `\n`
+1:0 - 1:1       editing_command
+1:0 - 1:1         function: function
+1:0 - 1:1           print_function
+1:0 - 1:1             verb: function_verb `p`
+1:1 - 2:0       command_separator
+1:1 - 1:2         `\n`
+
 ==================
-rejects address syntax: ","
+A separator at EOF distinguishes leading and trailing omissions
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 ,
 ------------------
 
+0:0 - 0:1   script
+0:0 - 0:1     command_list
+0:0 - 0:1       editing_command
+0:0 - 0:1         addresses: address_clause
+0:0 - 0:0           issue: syntax_issue
+0:0 - 0:0             undefined_syntax
+0:0 - 0:0               omitted_address
+0:0 - 0:1           separator: address_separator `,`
+0:1 - 0:1           issue: syntax_issue
+0:1 - 0:1             incomplete_syntax
+0:1 - 0:1               omitted_address
+0:1 - 0:1         issue: syntax_issue
+0:1 - 0:1           incomplete_syntax
+0:1 - 0:1             missing_function
+
 ==================
-rejects address syntax: "1,2,"
+A final excess address unit retains its omitted operand
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1,2,
 ------------------
 
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:4         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:3           second: address
+0:2 - 0:3             line_number_address `2`
+0:3 - 0:4           issue: syntax_issue
+0:3 - 0:4             nonconforming_syntax
+0:3 - 0:4               excess_address
+0:3 - 0:4                 separator: address_separator `,`
+0:4 - 0:4                 issue: syntax_issue
+0:4 - 0:4                   incomplete_syntax
+0:4 - 0:4                     omitted_address
+0:4 - 0:4         issue: syntax_issue
+0:4 - 0:4           incomplete_syntax
+0:4 - 0:4             missing_function
+
 ==================
-rejects address syntax: "1 , "
+Separator blanks precede an omitted final address
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1 , 
 ------------------
 
+0:0 - 0:4   script
+0:0 - 0:4     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:2           issue: syntax_issue
+0:1 - 0:2             nonconforming_syntax
+0:1 - 0:2               blanks_around_address_separator
+0:1 - 0:2                 blank ` `
+0:2 - 0:3           separator: address_separator `,`
+0:3 - 0:3           issue: syntax_issue
+0:3 - 0:3             incomplete_syntax
+0:3 - 0:3               omitted_address
+0:4 - 0:4         issue: syntax_issue
+0:4 - 0:4           incomplete_syntax
+0:4 - 0:4             missing_function
+
 ==================
-rejects address syntax: "1 2:x"
+Blank-separated addresses remain excess before a label at EOF
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1 2:x
 ------------------
 
+0:0 - 0:5   script
+0:0 - 0:5     command_list
+0:0 - 0:5       editing_command
+0:0 - 0:3         addresses: address_clause
+0:0 - 0:1           issue: syntax_issue
+0:0 - 0:1             nonconforming_syntax
+0:0 - 0:1               excess_address
+0:0 - 0:1                 address: address
+0:0 - 0:1                   line_number_address `1`
+0:1 - 0:3           issue: syntax_issue
+0:1 - 0:3             nonconforming_syntax
+0:1 - 0:3               excess_address
+0:1 - 0:1                 issue: syntax_issue
+0:1 - 0:1                   nonconforming_syntax
+0:1 - 0:1                     missing_address_separator
+0:2 - 0:3                 address: address
+0:2 - 0:3                   line_number_address `2`
+0:3 - 0:5         function: function
+0:3 - 0:5           label_function
+0:3 - 0:4             verb: function_verb `:`
+0:4 - 0:5             label: label
+0:4 - 0:5               label_literal `x`
+
 ==================
-rejects address syntax (BRE): "1/ab/q\n"
+An adjacent context address remains excess before quit (BRE)
 :language(posix_sed)
-:error
+:cst
 ==================
 1/ab/q
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:5           issue: syntax_issue
+0:1 - 0:5             nonconforming_syntax
+0:1 - 0:5               excess_address
+0:1 - 0:1                 issue: syntax_issue
+0:1 - 0:1                   nonconforming_syntax
+0:1 - 0:1                     missing_address_separator
+0:1 - 0:5                 address: address
+0:1 - 0:5                   context_address
+0:1 - 0:2                     opening: delimiter `/`
+0:2 - 0:4                     expression: basic_reg_exp
+0:2 - 0:4                       bre_branch
+0:2 - 0:3                         bre_expression
+0:2 - 0:3                           simple_bre
+0:2 - 0:3                             nondupl_bre
+0:2 - 0:3                               one_char_or_coll_elem_bre
+0:2 - 0:3                                 ordinary_character `a`
+0:3 - 0:4                         bre_expression
+0:3 - 0:4                           simple_bre
+0:3 - 0:4                             nondupl_bre
+0:3 - 0:4                               one_char_or_coll_elem_bre
+0:3 - 0:4                                 ordinary_character `b`
+0:4 - 0:5                     closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           quit_function
+0:5 - 0:6             verb: function_verb `q`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
 ==================
-rejects address syntax: "1 \t, \t2p\n"
+Separator blank runs retain their own source leaves
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1 	, 	2p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:8       editing_command
+0:0 - 0:7         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:3           issue: syntax_issue
+0:1 - 0:3             nonconforming_syntax
+0:1 - 0:3               blanks_around_address_separator
+0:1 - 0:3                 blank ` \t`
+0:3 - 0:4           separator: address_separator `,`
+0:4 - 0:6           issue: syntax_issue
+0:4 - 0:6             nonconforming_syntax
+0:4 - 0:6               blanks_around_address_separator
+0:4 - 0:6                 blank ` \t`
+0:6 - 0:7           second: address
+0:6 - 0:7             line_number_address `2`
+0:7 - 0:8         function: function
+0:7 - 0:8           print_function
+0:7 - 0:8             verb: function_verb `p`
+0:8 - 1:0       command_separator
+0:8 - 0:9         `\n`
+
 ==================
-rejects address syntax: "! \tp\n"
+Negation blank runs retain their own source leaf
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 ! 	p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:3         negation: negation
+0:0 - 0:1           operator: negation_operator `!`
+0:1 - 0:3           issue: syntax_issue
+0:1 - 0:3             unspecified_syntax
+0:1 - 0:3               blanks_after_negation
+0:1 - 0:3                 blank ` \t`
+0:3 - 0:4         function: function
+0:3 - 0:4           print_function
+0:3 - 0:4             verb: function_verb `p`
+0:4 - 1:0       command_separator
+0:4 - 0:5         `\n`
+
 ==================
-rejects address syntax: ", p\n"
+Blanks before the function follow both omitted addresses
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 , p
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:3       editing_command
+0:0 - 0:1         addresses: address_clause
+0:0 - 0:0           issue: syntax_issue
+0:0 - 0:0             undefined_syntax
+0:0 - 0:0               omitted_address
+0:0 - 0:1           separator: address_separator `,`
+0:1 - 0:1           issue: syntax_issue
+0:1 - 0:1             undefined_syntax
+0:1 - 0:1               omitted_address
+0:2 - 0:3         function: function
+0:2 - 0:3           print_function
+0:2 - 0:3             verb: function_verb `p`
+0:3 - 1:0       command_separator
+0:3 - 0:4         `\n`
+
 ==================
-rejects address syntax: " ,p\n"
+A leading blank is outside a command with omitted addresses
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
  ,p
 
 ------------------
 
+0:0 - 1:0   script
+0:1 - 1:0     command_list
+0:1 - 0:3       editing_command
+0:1 - 0:2         addresses: address_clause
+0:1 - 0:1           issue: syntax_issue
+0:1 - 0:1             undefined_syntax
+0:1 - 0:1               omitted_address
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:2           issue: syntax_issue
+0:2 - 0:2             undefined_syntax
+0:2 - 0:2               omitted_address
+0:2 - 0:3         function: function
+0:2 - 0:3           print_function
+0:2 - 0:3             verb: function_verb `p`
+0:3 - 1:0       command_separator
+0:3 - 0:4         `\n`
+
 ==================
-rejects address syntax: "\t,2p\n"
+A leading tab is outside a command with an omitted first address
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 	,2p
 
 ------------------
 
+0:0 - 1:0   script
+0:1 - 1:0     command_list
+0:1 - 0:4       editing_command
+0:1 - 0:3         addresses: address_clause
+0:1 - 0:1           issue: syntax_issue
+0:1 - 0:1             undefined_syntax
+0:1 - 0:1               omitted_address
+0:1 - 0:2           separator: address_separator `,`
+0:2 - 0:3           second: address
+0:2 - 0:3             line_number_address `2`
+0:3 - 0:4         function: function
+0:3 - 0:4           print_function
+0:3 - 0:4             verb: function_verb `p`
+0:4 - 1:0       command_separator
+0:4 - 0:5         `\n`
+
 ==================
-rejects address syntax: "{\n ,p\n}\n"
+A block command excludes its blank before omitted addresses
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 {
  ,p
 }
 
 ------------------
+
+0:0 - 3:0   script
+0:0 - 3:0     command_list
+0:0 - 2:1       editing_command
+0:0 - 2:1         function: function
+0:0 - 2:1           block_function
+0:0 - 0:1             verb: function_verb `{`
+0:1 - 2:0             commands: command_list
+0:1 - 0:1               empty_command
+0:1 - 1:0               command_separator
+0:1 - 0:2                 `\n`
+1:1 - 1:3               editing_command
+1:1 - 1:2                 addresses: address_clause
+1:1 - 1:1                   issue: syntax_issue
+1:1 - 1:1                     undefined_syntax
+1:1 - 1:1                       omitted_address
+1:1 - 1:2                   separator: address_separator `,`
+1:2 - 1:2                   issue: syntax_issue
+1:2 - 1:2                     undefined_syntax
+1:2 - 1:2                       omitted_address
+1:2 - 1:3                 function: function
+1:2 - 1:3                   print_function
+1:2 - 1:3                     verb: function_verb `p`
+1:3 - 2:0               command_separator
+1:3 - 1:4                 `\n`
+2:0 - 2:1             closing: closing_brace `}`
+2:1 - 3:0       command_separator
+2:1 - 2:2         `\n`
 
 ==================
 An address separator is a direct leaf
@@ -616,29 +1561,68 @@ An address separator is a direct leaf
 0:4 - 0:5         `\n`
 
 ==================
-rejects address syntax (ERE): "1/ab/q\n"
+An adjacent context address remains excess before quit (ERE)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1/ab/q
 
 ------------------
 
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:6       editing_command
+0:0 - 0:5         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:5           issue: syntax_issue
+0:1 - 0:5             nonconforming_syntax
+0:1 - 0:5               excess_address
+0:1 - 0:1                 issue: syntax_issue
+0:1 - 0:1                   nonconforming_syntax
+0:1 - 0:1                     missing_address_separator
+0:1 - 0:5                 address: address
+0:1 - 0:5                   context_address
+0:1 - 0:2                     opening: delimiter `/`
+0:2 - 0:4                     expression: extended_reg_exp
+0:2 - 0:4                       ere_branch
+0:2 - 0:3                         ere_expression
+0:2 - 0:3                           one_char_or_coll_elem_ere
+0:2 - 0:3                             ordinary_character `a`
+0:3 - 0:4                         ere_expression
+0:3 - 0:4                           one_char_or_coll_elem_ere
+0:3 - 0:4                             ordinary_character `b`
+0:4 - 0:5                     closing: delimiter `/`
+0:5 - 0:6         function: function
+0:5 - 0:6           quit_function
+0:5 - 0:6             verb: function_verb `q`
+0:6 - 1:0       command_separator
+0:6 - 0:7         `\n`
+
 ==================
-rejects address syntax: "1!!p\n"
+A duplicate negation after an address retains its operator
 :language(posix_sed)
 :language(posix_sed_ere)
-:error
+:cst
 ==================
 1!!p
 
 ------------------
 
-==================
-NUL address delimiter is outside the input contract
-:language(posix_sed)
-:language(posix_sed_ere)
-:error
-==================
-\ a p
-------------------
+0:0 - 1:0   script
+0:0 - 1:0     command_list
+0:0 - 0:4       editing_command
+0:0 - 0:1         addresses: address_clause
+0:0 - 0:1           first: address
+0:0 - 0:1             line_number_address `1`
+0:1 - 0:3         negation: negation
+0:1 - 0:2           operator: negation_operator `!`
+0:2 - 0:3           issue: syntax_issue
+0:2 - 0:3             nonconforming_syntax
+0:2 - 0:3               duplicate_negation
+0:2 - 0:3                 operator: negation_operator `!`
+0:3 - 0:4         function: function
+0:3 - 0:4           print_function
+0:3 - 0:4             verb: function_verb `p`
+0:4 - 1:0       command_separator
+0:4 - 0:5         `\n`
