@@ -1,6 +1,6 @@
 {
   "name": "@konomanoasa/tree-sitter-posix-sed",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Tree-sitter grammars for POSIX sed.",
   "license": "MIT",
   "repository": "git+https://github.com/konomanoasa/tree-sitter-posix-sed.git",
