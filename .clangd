@@ -13,14 +13,6 @@ If:
 CompileFlags:
   Add:
     - -xc-header
-    - -Wno-unused-function
-
----
-If:
-  PathMatch: test/[^/]*\.c
-CompileFlags:
-  Add:
-    - -Wno-unused-function
 
 ---
 If:
@@ -43,9 +35,8 @@ CompileFlags:
 
 ---
 If:
-  PathMatch:
-    - src/scanner\.c
-    - posix_sed_ere/src/scanner\.c
+  PathMatch: bindings/python/.*\.c
 CompileFlags:
+  CompilationDatabase: None
   Add:
-    - -Wno-unused-function
+    - -I../../src

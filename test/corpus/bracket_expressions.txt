@@ -207,569 +207,98 @@ treats dot-delimited outer brackets as an ordinary list
     (command_separator)))
 
 ==================
-rejects meta characters inside equivalence classes
+rejects bracket expression syntax (BRE): "/[[=-=]][[=]=]][[=^=]][[.^.]][[.-.]]/p\n"
 :language(posix_sed)
+:error
 ==================
 /[[=-=]][[=]=]][[=^=]][[.^.]][[.-.]]/p
 
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (address_clause
-        (address
-          (context_address
-            (delimiter)
-            (basic_reg_exp
-              (bre_branch
-                (bre_expression
-                  (simple_bre
-                    (nondupl_bre
-                      (one_char_or_coll_elem_bre
-                        (bracket_expression
-                          (matching_list
-                            (bracket_list
-                              (follow_list
-                                (expression_term
-                                  (single_expression
-                                    (equivalence_class
-                                      (syntax_issue
-                                        (undefined_syntax
-                                          (invalid_equivalence_class_element
-                                            (meta_character)))))))))))))))
-                (bre_expression
-                  (simple_bre
-                    (nondupl_bre
-                      (one_char_or_coll_elem_bre
-                        (bracket_expression
-                          (matching_list
-                            (bracket_list
-                              (follow_list
-                                (expression_term
-                                  (single_expression
-                                    (equivalence_class
-                                      (syntax_issue
-                                        (undefined_syntax
-                                          (invalid_equivalence_class_element
-                                            (meta_character)))))))))))))))
-                (bre_expression
-                  (simple_bre
-                    (nondupl_bre
-                      (one_char_or_coll_elem_bre
-                        (bracket_expression
-                          (matching_list
-                            (bracket_list
-                              (follow_list
-                                (expression_term
-                                  (single_expression
-                                    (equivalence_class
-                                      (collating_element_single))))))))))))
-                (bre_expression
-                  (simple_bre
-                    (nondupl_bre
-                      (one_char_or_coll_elem_bre
-                        (bracket_expression
-                          (matching_list
-                            (bracket_list
-                              (follow_list
-                                (expression_term
-                                  (single_expression
-                                    (end_range
-                                      (collating_symbol
-                                        (collating_element_single)))))))))))))
-                (bre_expression
-                  (simple_bre
-                    (nondupl_bre
-                      (one_char_or_coll_elem_bre
-                        (bracket_expression
-                          (matching_list
-                            (bracket_list
-                              (follow_list
-                                (expression_term
-                                  (single_expression
-                                    (end_range
-                                      (collating_symbol
-                                        (meta_character)))))))))))))))
-            (delimiter))))
-      (function
-        (print_function
-          (function_verb))))
-    (command_separator)))
-
 ==================
-owns an invalid character class name inside its syntax issue in BRE
+rejects bracket expression syntax (BRE): "s/[[:1:]]/x/\n"
 :language(posix_sed)
+:error
 ==================
 s/[[:1:]]/x/
 
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (function
-        (substitute_function
-          (function_verb)
-          (delimiter)
-          (basic_reg_exp
-            (bre_branch
-              (bre_expression
-                (simple_bre
-                  (nondupl_bre
-                    (one_char_or_coll_elem_bre
-                      (bracket_expression
-                        (matching_list
-                          (bracket_list
-                            (follow_list
-                              (expression_term
-                                (single_expression
-                                  (character_class
-                                    (syntax_issue
-                                      (undefined_syntax
-                                        (invalid_character_class_name))))))))))))))))
-          (delimiter)
-          (replacement
-            (replacement_literal))
-          (delimiter))))
-    (command_separator)))
-
 ==================
-owns an invalid character class name inside its syntax issue in ERE
+rejects bracket expression syntax (ERE): "s/[[:1:]]/x/\n"
 :language(posix_sed_ere)
+:error
 ==================
 s/[[:1:]]/x/
 
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (function
-        (substitute_function
-          (function_verb)
-          (delimiter)
-          (extended_reg_exp
-            (ere_branch
-              (ere_expression
-                (one_char_or_coll_elem_ere
-                  (bracket_expression
-                    (matching_list
-                      (bracket_list
-                        (follow_list
-                          (expression_term
-                            (single_expression
-                              (character_class
-                                (syntax_issue
-                                  (undefined_syntax
-                                    (invalid_character_class_name))))))))))))))
-          (delimiter)
-          (replacement
-            (replacement_literal))
-          (delimiter))))
-    (command_separator)))
-
 ==================
-keeps a partial character class closer outside its name
+rejects bracket expression syntax (BRE): "s/[[:alpha:"
 :language(posix_sed)
+:error
 ==================
 s/[[:alpha:
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (function
-        (substitute_function
-          (function_verb)
-          (delimiter)
-          (basic_reg_exp
-            (bre_branch
-              (bre_expression
-                (simple_bre
-                  (nondupl_bre
-                    (one_char_or_coll_elem_bre
-                      (bracket_expression
-                        (matching_list
-                          (bracket_list
-                            (follow_list
-                              (expression_term
-                                (single_expression
-                                  (character_class
-                                    (class_name)
-                                    (syntax_issue
-                                      (incomplete_syntax
-                                        (missing_bracket_term_close)))))))))
-                        (syntax_issue
-                          (incomplete_syntax
-                            (unclosed_bracket_expression))))))))))
-          (syntax_issue
-            (incomplete_syntax
-              (unterminated_regular_expression))))))))
-
 ==================
-keeps a partial collating symbol closer outside its element
+rejects bracket expression syntax (ERE): "s/[[.a."
 :language(posix_sed_ere)
+:error
 ==================
 s/[[.a.
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (function
-        (substitute_function
-          (function_verb)
-          (delimiter)
-          (extended_reg_exp
-            (ere_branch
-              (ere_expression
-                (one_char_or_coll_elem_ere
-                  (bracket_expression
-                    (matching_list
-                      (bracket_list
-                        (follow_list
-                          (expression_term
-                            (single_expression
-                              (end_range
-                                (collating_symbol
-                                  (collating_element_single)
-                                  (syntax_issue
-                                    (incomplete_syntax
-                                      (missing_bracket_term_close))))))))))
-                    (syntax_issue
-                      (incomplete_syntax
-                        (unclosed_bracket_expression))))))))
-          (syntax_issue
-            (incomplete_syntax
-              (unterminated_regular_expression))))))))
-
 ==================
-keeps a partial equivalence class closer outside its element
+rejects bracket expression syntax (BRE): "s/[[=a="
 :language(posix_sed)
+:error
 ==================
 s/[[=a=
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (function
-        (substitute_function
-          (function_verb)
-          (delimiter)
-          (basic_reg_exp
-            (bre_branch
-              (bre_expression
-                (simple_bre
-                  (nondupl_bre
-                    (one_char_or_coll_elem_bre
-                      (bracket_expression
-                        (matching_list
-                          (bracket_list
-                            (follow_list
-                              (expression_term
-                                (single_expression
-                                  (equivalence_class
-                                    (collating_element_single)
-                                    (syntax_issue
-                                      (incomplete_syntax
-                                        (missing_bracket_term_close)))))))))
-                        (syntax_issue
-                          (incomplete_syntax
-                            (unclosed_bracket_expression))))))))))
-          (syntax_issue
-            (incomplete_syntax
-              (unterminated_regular_expression))))))))
-
 ==================
-recovers malformed terms and non-portable ranges
+rejects bracket expression syntax (ERE): "/[a-m-o][a-[:alpha:]][[=a=]-z][a-[=b=]][[.x]/p\n"
 :language(posix_sed_ere)
+:error
 ==================
 /[a-m-o][a-[:alpha:]][[=a=]-z][a-[=b=]][[.x]/p
 
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (address_clause
-        (address
-          (context_address
-            (delimiter)
-            (extended_reg_exp
-              (ere_branch
-                (ere_expression
-                  (one_char_or_coll_elem_ere
-                    (bracket_expression
-                      (matching_list
-                        (bracket_list
-                          (follow_list
-                            (expression_term
-                              (range_expression
-                                (start_range
-                                  (end_range
-                                    (collating_element_single)))
-                                (end_range
-                                  (collating_element_single))))
-                            (expression_term
-                              (syntax_issue
-                                (undefined_syntax
-                                  (shared_range_endpoint))))
-                            (expression_term
-                              (single_expression
-                                (end_range
-                                  (collating_element_single))))))))))
-                (ere_expression
-                  (one_char_or_coll_elem_ere
-                    (bracket_expression
-                      (matching_list
-                        (bracket_list
-                          (follow_list
-                            (expression_term
-                              (range_expression
-                                (start_range
-                                  (end_range
-                                    (collating_element_single)))
-                                (end_range
-                                  (syntax_issue
-                                    (undefined_syntax
-                                      (character_class_range_end
-                                        (character_class
-                                          (class_name))))))))))))))
-                (ere_expression
-                  (one_char_or_coll_elem_ere
-                    (bracket_expression
-                      (matching_list
-                        (bracket_list
-                          (follow_list
-                            (expression_term
-                              (range_expression
-                                (start_range
-                                  (syntax_issue
-                                    (unspecified_syntax
-                                      (equivalence_class_range_start
-                                        (equivalence_class
-                                          (collating_element_single))))))
-                                (end_range
-                                  (collating_element_single))))))))))
-                (ere_expression
-                  (one_char_or_coll_elem_ere
-                    (bracket_expression
-                      (matching_list
-                        (bracket_list
-                          (follow_list
-                            (expression_term
-                              (range_expression
-                                (start_range
-                                  (end_range
-                                    (collating_element_single)))
-                                (end_range
-                                  (syntax_issue
-                                    (unspecified_syntax
-                                      (equivalence_class_range_end
-                                        (equivalence_class
-                                          (collating_element_single))))))))))))))
-                (ere_expression
-                  (one_char_or_coll_elem_ere
-                    (bracket_expression
-                      (matching_list
-                        (bracket_list
-                          (follow_list
-                            (expression_term
-                              (single_expression
-                                (end_range
-                                  (collating_symbol
-                                    (collating_element_multi)
-                                    (syntax_issue
-                                      (undefined_syntax
-                                        (missing_bracket_term_close))))))))))
-                      (syntax_issue
-                        (undefined_syntax
-                          (unclosed_bracket_expression))))))))
-            (syntax_issue
-              (nonconforming_syntax
-                (unterminated_regular_expression))))))
-      (syntax_issue
-        (nonconforming_syntax
-          (missing_function))))
-    (command_separator)))
-
 ==================
-keeps an EOF equivalence element incomplete
+rejects bracket expression syntax (BRE): "/[[=-"
 :language(posix_sed)
+:error
 ==================
 /[[=-
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (address_clause
-        (address
-          (context_address
-            (delimiter)
-            (basic_reg_exp
-              (bre_branch
-                (bre_expression
-                  (simple_bre
-                    (nondupl_bre
-                      (one_char_or_coll_elem_bre
-                        (bracket_expression
-                          (matching_list
-                            (bracket_list
-                              (follow_list
-                                (expression_term
-                                  (single_expression
-                                    (equivalence_class
-                                      (syntax_issue
-                                        (incomplete_syntax
-                                          (invalid_equivalence_class_element
-                                            (meta_character))))
-                                      (syntax_issue
-                                        (incomplete_syntax
-                                          (missing_bracket_term_close)))))))))
-                          (syntax_issue
-                            (incomplete_syntax
-                              (unclosed_bracket_expression))))))))))
-            (syntax_issue
-              (incomplete_syntax
-                (unterminated_regular_expression))))))
-      (syntax_issue
-        (incomplete_syntax
-          (missing_function))))))
-
 ==================
-keeps an EOF equivalence element incomplete
+rejects bracket expression syntax (ERE): "/[[=-"
 :language(posix_sed_ere)
+:error
 ==================
 /[[=-
 ------------------
 
-(script
-  (command_list
-    (editing_command
-      (address_clause
-        (address
-          (context_address
-            (delimiter)
-            (extended_reg_exp
-              (ere_branch
-                (ere_expression
-                  (one_char_or_coll_elem_ere
-                    (bracket_expression
-                      (matching_list
-                        (bracket_list
-                          (follow_list
-                            (expression_term
-                              (single_expression
-                                (equivalence_class
-                                  (syntax_issue
-                                    (incomplete_syntax
-                                      (invalid_equivalence_class_element
-                                        (meta_character))))
-                                  (syntax_issue
-                                    (incomplete_syntax
-                                      (missing_bracket_term_close)))))))))
-                      (syntax_issue
-                        (incomplete_syntax
-                          (unclosed_bracket_expression))))))))
-            (syntax_issue
-              (incomplete_syntax
-                (unterminated_regular_expression))))))
-      (syntax_issue
-        (incomplete_syntax
-          (missing_function))))))
-
 ==================
-An unfinished bracket expression retains its element (BRE)
+rejects bracket expression syntax (BRE): "/[a"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[a
 ------------------
 
-0:0 - 0:3   script
-0:0 - 0:3     command_list
-0:0 - 0:3       editing_command
-0:0 - 0:3         addresses: address_clause
-0:0 - 0:3           first: address
-0:0 - 0:3             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:3               expression: basic_reg_exp
-0:1 - 0:3                 bre_branch
-0:1 - 0:3                   bre_expression
-0:1 - 0:3                     simple_bre
-0:1 - 0:3                       nondupl_bre
-0:1 - 0:3                         one_char_or_coll_elem_bre
-0:1 - 0:3                           bracket_expression
-0:1 - 0:2                             "["
-0:2 - 0:3                             matching_list
-0:2 - 0:3                               bracket_list
-0:2 - 0:3                                 follow_list
-0:2 - 0:3                                   expression_term
-0:2 - 0:3                                     single_expression
-0:2 - 0:3                                       end_range
-0:2 - 0:3                                         collating_element_single `a`
-0:3 - 0:3                             issue: syntax_issue
-0:3 - 0:3                               incomplete_syntax
-0:3 - 0:3                                 unclosed_bracket_expression
-0:3 - 0:3               issue: syntax_issue
-0:3 - 0:3                 incomplete_syntax
-0:3 - 0:3                   unterminated_regular_expression
-0:3 - 0:3         issue: syntax_issue
-0:3 - 0:3           incomplete_syntax
-0:3 - 0:3             missing_function
-
 ==================
-A physical newline terminates an unfinished bracket expression (BRE)
+rejects bracket expression syntax (BRE): "/[a\np\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[a
 p
 
 ------------------
-
-0:0 - 2:0   script
-0:0 - 2:0     command_list
-0:0 - 0:3       editing_command
-0:0 - 0:3         addresses: address_clause
-0:0 - 0:3           first: address
-0:0 - 0:3             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:3               expression: basic_reg_exp
-0:1 - 0:3                 bre_branch
-0:1 - 0:3                   bre_expression
-0:1 - 0:3                     simple_bre
-0:1 - 0:3                       nondupl_bre
-0:1 - 0:3                         one_char_or_coll_elem_bre
-0:1 - 0:3                           bracket_expression
-0:1 - 0:2                             "["
-0:2 - 0:3                             matching_list
-0:2 - 0:3                               bracket_list
-0:2 - 0:3                                 follow_list
-0:2 - 0:3                                   expression_term
-0:2 - 0:3                                     single_expression
-0:2 - 0:3                                       end_range
-0:2 - 0:3                                         collating_element_single `a`
-0:3 - 0:3                             issue: syntax_issue
-0:3 - 0:3                               undefined_syntax
-0:3 - 0:3                                 unclosed_bracket_expression
-0:3 - 0:3               issue: syntax_issue
-0:3 - 0:3                 nonconforming_syntax
-0:3 - 0:3                   unterminated_regular_expression
-0:3 - 0:3         issue: syntax_issue
-0:3 - 0:3           nonconforming_syntax
-0:3 - 0:3             missing_function
-0:3 - 1:0       command_separator
-0:3 - 0:4         `\n`
-1:0 - 1:1       editing_command
-1:0 - 1:1         function: function
-1:0 - 1:1           print_function
-1:0 - 1:1             verb: function_verb `p`
-1:1 - 2:0       command_separator
-1:1 - 1:2         `\n`
 
 ==================
 A bracket element and closing delimiter are direct leaves (BRE)
@@ -811,214 +340,44 @@ A bracket element and closing delimiter are direct leaves (BRE)
 0:6 - 0:7         `\n`
 
 ==================
-An empty unfinished bracket has no invented list (BRE)
+rejects bracket expression syntax (BRE): "/["
 :language(posix_sed)
-:cst
+:error
 ==================
 /[
 ------------------
 
-0:0 - 0:2   script
-0:0 - 0:2     command_list
-0:0 - 0:2       editing_command
-0:0 - 0:2         addresses: address_clause
-0:0 - 0:2           first: address
-0:0 - 0:2             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:2               expression: basic_reg_exp
-0:1 - 0:2                 bre_branch
-0:1 - 0:2                   bre_expression
-0:1 - 0:2                     simple_bre
-0:1 - 0:2                       nondupl_bre
-0:1 - 0:2                         one_char_or_coll_elem_bre
-0:1 - 0:2                           bracket_expression
-0:1 - 0:2                             "["
-0:2 - 0:2                             issue: syntax_issue
-0:2 - 0:2                               incomplete_syntax
-0:2 - 0:2                                 missing_bracket_list
-0:2 - 0:2                             issue: syntax_issue
-0:2 - 0:2                               incomplete_syntax
-0:2 - 0:2                                 unclosed_bracket_expression
-0:2 - 0:2               issue: syntax_issue
-0:2 - 0:2                 incomplete_syntax
-0:2 - 0:2                   unterminated_regular_expression
-0:2 - 0:2         issue: syntax_issue
-0:2 - 0:2           incomplete_syntax
-0:2 - 0:2             missing_function
-
 ==================
-An unfinished negated bracket retains its list negation (BRE)
+rejects bracket expression syntax (BRE): "/[^"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[^
 ------------------
 
-0:0 - 0:3   script
-0:0 - 0:3     command_list
-0:0 - 0:3       editing_command
-0:0 - 0:3         addresses: address_clause
-0:0 - 0:3           first: address
-0:0 - 0:3             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:3               expression: basic_reg_exp
-0:1 - 0:3                 bre_branch
-0:1 - 0:3                   bre_expression
-0:1 - 0:3                     simple_bre
-0:1 - 0:3                       nondupl_bre
-0:1 - 0:3                         one_char_or_coll_elem_bre
-0:1 - 0:3                           bracket_expression
-0:1 - 0:2                             "["
-0:2 - 0:3                             nonmatching_list
-0:2 - 0:3                               "^"
-0:3 - 0:3                               issue: syntax_issue
-0:3 - 0:3                                 incomplete_syntax
-0:3 - 0:3                                   missing_bracket_list
-0:3 - 0:3                             issue: syntax_issue
-0:3 - 0:3                               incomplete_syntax
-0:3 - 0:3                                 unclosed_bracket_expression
-0:3 - 0:3               issue: syntax_issue
-0:3 - 0:3                 incomplete_syntax
-0:3 - 0:3                   unterminated_regular_expression
-0:3 - 0:3         issue: syntax_issue
-0:3 - 0:3           incomplete_syntax
-0:3 - 0:3             missing_function
-
 ==================
-An unfinished character_class has no synthesized closing leaves (BRE)
+rejects bracket expression syntax (BRE): "/[[:alpha"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[[:alpha
 ------------------
 
-0:0 - 0:9   script
-0:0 - 0:9     command_list
-0:0 - 0:9       editing_command
-0:0 - 0:9         addresses: address_clause
-0:0 - 0:9           first: address
-0:0 - 0:9             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:9               expression: basic_reg_exp
-0:1 - 0:9                 bre_branch
-0:1 - 0:9                   bre_expression
-0:1 - 0:9                     simple_bre
-0:1 - 0:9                       nondupl_bre
-0:1 - 0:9                         one_char_or_coll_elem_bre
-0:1 - 0:9                           bracket_expression
-0:1 - 0:2                             "["
-0:2 - 0:9                             matching_list
-0:2 - 0:9                               bracket_list
-0:2 - 0:9                                 follow_list
-0:2 - 0:9                                   expression_term
-0:2 - 0:9                                     single_expression
-0:2 - 0:9                                       character_class
-0:2 - 0:3                                         "["
-0:3 - 0:4                                         ":"
-0:4 - 0:9                                         name: class_name `alpha`
-0:9 - 0:9                                         issue: syntax_issue
-0:9 - 0:9                                           incomplete_syntax
-0:9 - 0:9                                             missing_bracket_term_close
-0:9 - 0:9                             issue: syntax_issue
-0:9 - 0:9                               incomplete_syntax
-0:9 - 0:9                                 unclosed_bracket_expression
-0:9 - 0:9               issue: syntax_issue
-0:9 - 0:9                 incomplete_syntax
-0:9 - 0:9                   unterminated_regular_expression
-0:9 - 0:9         issue: syntax_issue
-0:9 - 0:9           incomplete_syntax
-0:9 - 0:9             missing_function
-
 ==================
-An unfinished collating_symbol has no synthesized closing leaves (BRE)
+rejects bracket expression syntax (BRE): "/[[.a"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[[.a
 ------------------
 
-0:0 - 0:5   script
-0:0 - 0:5     command_list
-0:0 - 0:5       editing_command
-0:0 - 0:5         addresses: address_clause
-0:0 - 0:5           first: address
-0:0 - 0:5             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:5               expression: basic_reg_exp
-0:1 - 0:5                 bre_branch
-0:1 - 0:5                   bre_expression
-0:1 - 0:5                     simple_bre
-0:1 - 0:5                       nondupl_bre
-0:1 - 0:5                         one_char_or_coll_elem_bre
-0:1 - 0:5                           bracket_expression
-0:1 - 0:2                             "["
-0:2 - 0:5                             matching_list
-0:2 - 0:5                               bracket_list
-0:2 - 0:5                                 follow_list
-0:2 - 0:5                                   expression_term
-0:2 - 0:5                                     single_expression
-0:2 - 0:5                                       end_range
-0:2 - 0:5                                         collating_symbol
-0:2 - 0:3                                           "["
-0:3 - 0:4                                           "."
-0:4 - 0:5                                           element: collating_element_single `a`
-0:5 - 0:5                                           issue: syntax_issue
-0:5 - 0:5                                             incomplete_syntax
-0:5 - 0:5                                               missing_bracket_term_close
-0:5 - 0:5                             issue: syntax_issue
-0:5 - 0:5                               incomplete_syntax
-0:5 - 0:5                                 unclosed_bracket_expression
-0:5 - 0:5               issue: syntax_issue
-0:5 - 0:5                 incomplete_syntax
-0:5 - 0:5                   unterminated_regular_expression
-0:5 - 0:5         issue: syntax_issue
-0:5 - 0:5           incomplete_syntax
-0:5 - 0:5             missing_function
-
 ==================
-An unfinished equivalence_class has no synthesized closing leaves (BRE)
+rejects bracket expression syntax (BRE): "/[[=a"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[[=a
 ------------------
-
-0:0 - 0:5   script
-0:0 - 0:5     command_list
-0:0 - 0:5       editing_command
-0:0 - 0:5         addresses: address_clause
-0:0 - 0:5           first: address
-0:0 - 0:5             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:5               expression: basic_reg_exp
-0:1 - 0:5                 bre_branch
-0:1 - 0:5                   bre_expression
-0:1 - 0:5                     simple_bre
-0:1 - 0:5                       nondupl_bre
-0:1 - 0:5                         one_char_or_coll_elem_bre
-0:1 - 0:5                           bracket_expression
-0:1 - 0:2                             "["
-0:2 - 0:5                             matching_list
-0:2 - 0:5                               bracket_list
-0:2 - 0:5                                 follow_list
-0:2 - 0:5                                   expression_term
-0:2 - 0:5                                     single_expression
-0:2 - 0:5                                       equivalence_class
-0:2 - 0:3                                         "["
-0:3 - 0:4                                         "="
-0:4 - 0:5                                         element: collating_element_single `a`
-0:5 - 0:5                                         issue: syntax_issue
-0:5 - 0:5                                           incomplete_syntax
-0:5 - 0:5                                             missing_bracket_term_close
-0:5 - 0:5                             issue: syntax_issue
-0:5 - 0:5                               incomplete_syntax
-0:5 - 0:5                                 unclosed_bracket_expression
-0:5 - 0:5               issue: syntax_issue
-0:5 - 0:5                 incomplete_syntax
-0:5 - 0:5                   unterminated_regular_expression
-0:5 - 0:5         issue: syntax_issue
-0:5 - 0:5           incomplete_syntax
-0:5 - 0:5             missing_function
 
 ==================
 Bracket terms directly own their one-byte delimiter leaves (BRE)
@@ -1081,137 +440,21 @@ Bracket terms directly own their one-byte delimiter leaves (BRE)
 0:24 - 0:25         `\n`
 
 ==================
-Empty compound terms retain all their delimiter leaves (BRE)
+rejects bracket expression syntax (BRE): "/[[::]][[..]][[==]]/p\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[[::]][[..]][[==]]/p
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:21       editing_command
-0:0  - 0:20         addresses: address_clause
-0:0  - 0:20           first: address
-0:0  - 0:20             context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:19               expression: basic_reg_exp
-0:1  - 0:19                 bre_branch
-0:1  - 0:7                    bre_expression
-0:1  - 0:7                      simple_bre
-0:1  - 0:7                        nondupl_bre
-0:1  - 0:7                          one_char_or_coll_elem_bre
-0:1  - 0:7                            bracket_expression
-0:1  - 0:2                              "["
-0:2  - 0:6                              matching_list
-0:2  - 0:6                                bracket_list
-0:2  - 0:6                                  follow_list
-0:2  - 0:6                                    expression_term
-0:2  - 0:6                                      single_expression
-0:2  - 0:6                                        character_class
-0:2  - 0:3                                          "["
-0:3  - 0:4                                          ":"
-0:4  - 0:4                                          issue: syntax_issue
-0:4  - 0:4                                            undefined_syntax
-0:4  - 0:4                                              missing_bracket_term_payload
-0:4  - 0:5                                          ":"
-0:5  - 0:6                                          "]"
-0:6  - 0:7                              "]"
-0:7  - 0:13                   bre_expression
-0:7  - 0:13                     simple_bre
-0:7  - 0:13                       nondupl_bre
-0:7  - 0:13                         one_char_or_coll_elem_bre
-0:7  - 0:13                           bracket_expression
-0:7  - 0:8                              "["
-0:8  - 0:12                             matching_list
-0:8  - 0:12                               bracket_list
-0:8  - 0:12                                 follow_list
-0:8  - 0:12                                   expression_term
-0:8  - 0:12                                     single_expression
-0:8  - 0:12                                       end_range
-0:8  - 0:12                                         collating_symbol
-0:8  - 0:9                                            "["
-0:9  - 0:10                                           "."
-0:10 - 0:10                                           issue: syntax_issue
-0:10 - 0:10                                             undefined_syntax
-0:10 - 0:10                                               missing_bracket_term_payload
-0:10 - 0:11                                           "."
-0:11 - 0:12                                           "]"
-0:12 - 0:13                             "]"
-0:13 - 0:19                   bre_expression
-0:13 - 0:19                     simple_bre
-0:13 - 0:19                       nondupl_bre
-0:13 - 0:19                         one_char_or_coll_elem_bre
-0:13 - 0:19                           bracket_expression
-0:13 - 0:14                             "["
-0:14 - 0:18                             matching_list
-0:14 - 0:18                               bracket_list
-0:14 - 0:18                                 follow_list
-0:14 - 0:18                                   expression_term
-0:14 - 0:18                                     single_expression
-0:14 - 0:18                                       equivalence_class
-0:14 - 0:15                                         "["
-0:15 - 0:16                                         "="
-0:16 - 0:16                                         issue: syntax_issue
-0:16 - 0:16                                           undefined_syntax
-0:16 - 0:16                                             missing_bracket_term_payload
-0:16 - 0:17                                         "="
-0:17 - 0:18                                         "]"
-0:18 - 0:19                             "]"
-0:19 - 0:20               closing: delimiter `/`
-0:20 - 0:21         function: function
-0:20 - 0:21           print_function
-0:20 - 0:21             verb: function_verb `p`
-0:21 - 1:0        command_separator
-0:21 - 0:22         `\n`
-
 ==================
-A pending closing marker is excluded from a malformed class name (BRE)
+rejects bracket expression syntax (BRE): "s/[[:al pha:"
 :language(posix_sed)
-:cst
+:error
 ==================
 s/[[:al pha:
 ------------------
-
-0:0  - 0:12   script
-0:0  - 0:12     command_list
-0:0  - 0:12       editing_command
-0:0  - 0:12         function: function
-0:0  - 0:12           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:12             expression: basic_reg_exp
-0:2  - 0:12               bre_branch
-0:2  - 0:12                 bre_expression
-0:2  - 0:12                   simple_bre
-0:2  - 0:12                     nondupl_bre
-0:2  - 0:12                       one_char_or_coll_elem_bre
-0:2  - 0:12                         bracket_expression
-0:2  - 0:3                            "["
-0:3  - 0:12                           matching_list
-0:3  - 0:12                             bracket_list
-0:3  - 0:12                               follow_list
-0:3  - 0:12                                 expression_term
-0:3  - 0:12                                   single_expression
-0:3  - 0:12                                     character_class
-0:3  - 0:4                                        "["
-0:4  - 0:5                                        ":"
-0:5  - 0:7                                        name: class_name `al`
-0:7  - 0:8                                        issue: syntax_issue
-0:7  - 0:8                                          undefined_syntax
-0:7  - 0:8                                            invalid_character_class_name ` `
-0:8  - 0:11                                       name: class_name `pha`
-0:11 - 0:12                                       ":"
-0:12 - 0:12                                       issue: syntax_issue
-0:12 - 0:12                                         incomplete_syntax
-0:12 - 0:12                                           missing_bracket_term_close
-0:12 - 0:12                           issue: syntax_issue
-0:12 - 0:12                             incomplete_syntax
-0:12 - 0:12                               unclosed_bracket_expression
-0:12 - 0:12             issue: syntax_issue
-0:12 - 0:12               incomplete_syntax
-0:12 - 0:12                 unterminated_regular_expression
 
 ==================
 The class name alnum remains one syntactic payload (BRE)
@@ -1816,90 +1059,22 @@ s/[[:Custom9:]]/x/
 0:18 - 0:19         `\n`
 
 ==================
-An unfinished bracket expression retains its element (ERE)
+rejects bracket expression syntax (ERE): "/[a"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[a
 ------------------
 
-0:0 - 0:3   script
-0:0 - 0:3     command_list
-0:0 - 0:3       editing_command
-0:0 - 0:3         addresses: address_clause
-0:0 - 0:3           first: address
-0:0 - 0:3             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:3               expression: extended_reg_exp
-0:1 - 0:3                 ere_branch
-0:1 - 0:3                   ere_expression
-0:1 - 0:3                     one_char_or_coll_elem_ere
-0:1 - 0:3                       bracket_expression
-0:1 - 0:2                         "["
-0:2 - 0:3                         matching_list
-0:2 - 0:3                           bracket_list
-0:2 - 0:3                             follow_list
-0:2 - 0:3                               expression_term
-0:2 - 0:3                                 single_expression
-0:2 - 0:3                                   end_range
-0:2 - 0:3                                     collating_element_single `a`
-0:3 - 0:3                         issue: syntax_issue
-0:3 - 0:3                           incomplete_syntax
-0:3 - 0:3                             unclosed_bracket_expression
-0:3 - 0:3               issue: syntax_issue
-0:3 - 0:3                 incomplete_syntax
-0:3 - 0:3                   unterminated_regular_expression
-0:3 - 0:3         issue: syntax_issue
-0:3 - 0:3           incomplete_syntax
-0:3 - 0:3             missing_function
-
 ==================
-A physical newline terminates an unfinished bracket expression (ERE)
+rejects bracket expression syntax (ERE): "/[a\np\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[a
 p
 
 ------------------
-
-0:0 - 2:0   script
-0:0 - 2:0     command_list
-0:0 - 0:3       editing_command
-0:0 - 0:3         addresses: address_clause
-0:0 - 0:3           first: address
-0:0 - 0:3             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:3               expression: extended_reg_exp
-0:1 - 0:3                 ere_branch
-0:1 - 0:3                   ere_expression
-0:1 - 0:3                     one_char_or_coll_elem_ere
-0:1 - 0:3                       bracket_expression
-0:1 - 0:2                         "["
-0:2 - 0:3                         matching_list
-0:2 - 0:3                           bracket_list
-0:2 - 0:3                             follow_list
-0:2 - 0:3                               expression_term
-0:2 - 0:3                                 single_expression
-0:2 - 0:3                                   end_range
-0:2 - 0:3                                     collating_element_single `a`
-0:3 - 0:3                         issue: syntax_issue
-0:3 - 0:3                           undefined_syntax
-0:3 - 0:3                             unclosed_bracket_expression
-0:3 - 0:3               issue: syntax_issue
-0:3 - 0:3                 nonconforming_syntax
-0:3 - 0:3                   unterminated_regular_expression
-0:3 - 0:3         issue: syntax_issue
-0:3 - 0:3           nonconforming_syntax
-0:3 - 0:3             missing_function
-0:3 - 1:0       command_separator
-0:3 - 0:4         `\n`
-1:0 - 1:1       editing_command
-1:0 - 1:1         function: function
-1:0 - 1:1           print_function
-1:0 - 1:1             verb: function_verb `p`
-1:1 - 2:0       command_separator
-1:1 - 1:2         `\n`
 
 ==================
 A bracket element and closing delimiter are direct leaves (ERE)
@@ -1939,204 +1114,44 @@ A bracket element and closing delimiter are direct leaves (ERE)
 0:6 - 0:7         `\n`
 
 ==================
-An empty unfinished bracket has no invented list (ERE)
+rejects bracket expression syntax (ERE): "/["
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[
 ------------------
 
-0:0 - 0:2   script
-0:0 - 0:2     command_list
-0:0 - 0:2       editing_command
-0:0 - 0:2         addresses: address_clause
-0:0 - 0:2           first: address
-0:0 - 0:2             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:2               expression: extended_reg_exp
-0:1 - 0:2                 ere_branch
-0:1 - 0:2                   ere_expression
-0:1 - 0:2                     one_char_or_coll_elem_ere
-0:1 - 0:2                       bracket_expression
-0:1 - 0:2                         "["
-0:2 - 0:2                         issue: syntax_issue
-0:2 - 0:2                           incomplete_syntax
-0:2 - 0:2                             missing_bracket_list
-0:2 - 0:2                         issue: syntax_issue
-0:2 - 0:2                           incomplete_syntax
-0:2 - 0:2                             unclosed_bracket_expression
-0:2 - 0:2               issue: syntax_issue
-0:2 - 0:2                 incomplete_syntax
-0:2 - 0:2                   unterminated_regular_expression
-0:2 - 0:2         issue: syntax_issue
-0:2 - 0:2           incomplete_syntax
-0:2 - 0:2             missing_function
-
 ==================
-An unfinished negated bracket retains its list negation (ERE)
+rejects bracket expression syntax (ERE): "/[^"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[^
 ------------------
 
-0:0 - 0:3   script
-0:0 - 0:3     command_list
-0:0 - 0:3       editing_command
-0:0 - 0:3         addresses: address_clause
-0:0 - 0:3           first: address
-0:0 - 0:3             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:3               expression: extended_reg_exp
-0:1 - 0:3                 ere_branch
-0:1 - 0:3                   ere_expression
-0:1 - 0:3                     one_char_or_coll_elem_ere
-0:1 - 0:3                       bracket_expression
-0:1 - 0:2                         "["
-0:2 - 0:3                         nonmatching_list
-0:2 - 0:3                           "^"
-0:3 - 0:3                           issue: syntax_issue
-0:3 - 0:3                             incomplete_syntax
-0:3 - 0:3                               missing_bracket_list
-0:3 - 0:3                         issue: syntax_issue
-0:3 - 0:3                           incomplete_syntax
-0:3 - 0:3                             unclosed_bracket_expression
-0:3 - 0:3               issue: syntax_issue
-0:3 - 0:3                 incomplete_syntax
-0:3 - 0:3                   unterminated_regular_expression
-0:3 - 0:3         issue: syntax_issue
-0:3 - 0:3           incomplete_syntax
-0:3 - 0:3             missing_function
-
 ==================
-An unfinished character_class has no synthesized closing leaves (ERE)
+rejects bracket expression syntax (ERE): "/[[:alpha"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[[:alpha
 ------------------
 
-0:0 - 0:9   script
-0:0 - 0:9     command_list
-0:0 - 0:9       editing_command
-0:0 - 0:9         addresses: address_clause
-0:0 - 0:9           first: address
-0:0 - 0:9             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:9               expression: extended_reg_exp
-0:1 - 0:9                 ere_branch
-0:1 - 0:9                   ere_expression
-0:1 - 0:9                     one_char_or_coll_elem_ere
-0:1 - 0:9                       bracket_expression
-0:1 - 0:2                         "["
-0:2 - 0:9                         matching_list
-0:2 - 0:9                           bracket_list
-0:2 - 0:9                             follow_list
-0:2 - 0:9                               expression_term
-0:2 - 0:9                                 single_expression
-0:2 - 0:9                                   character_class
-0:2 - 0:3                                     "["
-0:3 - 0:4                                     ":"
-0:4 - 0:9                                     name: class_name `alpha`
-0:9 - 0:9                                     issue: syntax_issue
-0:9 - 0:9                                       incomplete_syntax
-0:9 - 0:9                                         missing_bracket_term_close
-0:9 - 0:9                         issue: syntax_issue
-0:9 - 0:9                           incomplete_syntax
-0:9 - 0:9                             unclosed_bracket_expression
-0:9 - 0:9               issue: syntax_issue
-0:9 - 0:9                 incomplete_syntax
-0:9 - 0:9                   unterminated_regular_expression
-0:9 - 0:9         issue: syntax_issue
-0:9 - 0:9           incomplete_syntax
-0:9 - 0:9             missing_function
-
 ==================
-An unfinished collating_symbol has no synthesized closing leaves (ERE)
+rejects bracket expression syntax (ERE): "/[[.a"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[[.a
 ------------------
 
-0:0 - 0:5   script
-0:0 - 0:5     command_list
-0:0 - 0:5       editing_command
-0:0 - 0:5         addresses: address_clause
-0:0 - 0:5           first: address
-0:0 - 0:5             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:5               expression: extended_reg_exp
-0:1 - 0:5                 ere_branch
-0:1 - 0:5                   ere_expression
-0:1 - 0:5                     one_char_or_coll_elem_ere
-0:1 - 0:5                       bracket_expression
-0:1 - 0:2                         "["
-0:2 - 0:5                         matching_list
-0:2 - 0:5                           bracket_list
-0:2 - 0:5                             follow_list
-0:2 - 0:5                               expression_term
-0:2 - 0:5                                 single_expression
-0:2 - 0:5                                   end_range
-0:2 - 0:5                                     collating_symbol
-0:2 - 0:3                                       "["
-0:3 - 0:4                                       "."
-0:4 - 0:5                                       element: collating_element_single `a`
-0:5 - 0:5                                       issue: syntax_issue
-0:5 - 0:5                                         incomplete_syntax
-0:5 - 0:5                                           missing_bracket_term_close
-0:5 - 0:5                         issue: syntax_issue
-0:5 - 0:5                           incomplete_syntax
-0:5 - 0:5                             unclosed_bracket_expression
-0:5 - 0:5               issue: syntax_issue
-0:5 - 0:5                 incomplete_syntax
-0:5 - 0:5                   unterminated_regular_expression
-0:5 - 0:5         issue: syntax_issue
-0:5 - 0:5           incomplete_syntax
-0:5 - 0:5             missing_function
-
 ==================
-An unfinished equivalence_class has no synthesized closing leaves (ERE)
+rejects bracket expression syntax (ERE): "/[[=a"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[[=a
 ------------------
-
-0:0 - 0:5   script
-0:0 - 0:5     command_list
-0:0 - 0:5       editing_command
-0:0 - 0:5         addresses: address_clause
-0:0 - 0:5           first: address
-0:0 - 0:5             context_address
-0:0 - 0:1               opening: delimiter `/`
-0:1 - 0:5               expression: extended_reg_exp
-0:1 - 0:5                 ere_branch
-0:1 - 0:5                   ere_expression
-0:1 - 0:5                     one_char_or_coll_elem_ere
-0:1 - 0:5                       bracket_expression
-0:1 - 0:2                         "["
-0:2 - 0:5                         matching_list
-0:2 - 0:5                           bracket_list
-0:2 - 0:5                             follow_list
-0:2 - 0:5                               expression_term
-0:2 - 0:5                                 single_expression
-0:2 - 0:5                                   equivalence_class
-0:2 - 0:3                                     "["
-0:3 - 0:4                                     "="
-0:4 - 0:5                                     element: collating_element_single `a`
-0:5 - 0:5                                     issue: syntax_issue
-0:5 - 0:5                                       incomplete_syntax
-0:5 - 0:5                                         missing_bracket_term_close
-0:5 - 0:5                         issue: syntax_issue
-0:5 - 0:5                           incomplete_syntax
-0:5 - 0:5                             unclosed_bracket_expression
-0:5 - 0:5               issue: syntax_issue
-0:5 - 0:5                 incomplete_syntax
-0:5 - 0:5                   unterminated_regular_expression
-0:5 - 0:5         issue: syntax_issue
-0:5 - 0:5           incomplete_syntax
-0:5 - 0:5             missing_function
 
 ==================
 Bracket terms directly own their one-byte delimiter leaves (ERE)
@@ -2197,129 +1212,21 @@ Bracket terms directly own their one-byte delimiter leaves (ERE)
 0:24 - 0:25         `\n`
 
 ==================
-Empty compound terms retain all their delimiter leaves (ERE)
+rejects bracket expression syntax (ERE): "/[[::]][[..]][[==]]/p\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[[::]][[..]][[==]]/p
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:21       editing_command
-0:0  - 0:20         addresses: address_clause
-0:0  - 0:20           first: address
-0:0  - 0:20             context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:19               expression: extended_reg_exp
-0:1  - 0:19                 ere_branch
-0:1  - 0:7                    ere_expression
-0:1  - 0:7                      one_char_or_coll_elem_ere
-0:1  - 0:7                        bracket_expression
-0:1  - 0:2                          "["
-0:2  - 0:6                          matching_list
-0:2  - 0:6                            bracket_list
-0:2  - 0:6                              follow_list
-0:2  - 0:6                                expression_term
-0:2  - 0:6                                  single_expression
-0:2  - 0:6                                    character_class
-0:2  - 0:3                                      "["
-0:3  - 0:4                                      ":"
-0:4  - 0:4                                      issue: syntax_issue
-0:4  - 0:4                                        undefined_syntax
-0:4  - 0:4                                          missing_bracket_term_payload
-0:4  - 0:5                                      ":"
-0:5  - 0:6                                      "]"
-0:6  - 0:7                          "]"
-0:7  - 0:13                   ere_expression
-0:7  - 0:13                     one_char_or_coll_elem_ere
-0:7  - 0:13                       bracket_expression
-0:7  - 0:8                          "["
-0:8  - 0:12                         matching_list
-0:8  - 0:12                           bracket_list
-0:8  - 0:12                             follow_list
-0:8  - 0:12                               expression_term
-0:8  - 0:12                                 single_expression
-0:8  - 0:12                                   end_range
-0:8  - 0:12                                     collating_symbol
-0:8  - 0:9                                        "["
-0:9  - 0:10                                       "."
-0:10 - 0:10                                       issue: syntax_issue
-0:10 - 0:10                                         undefined_syntax
-0:10 - 0:10                                           missing_bracket_term_payload
-0:10 - 0:11                                       "."
-0:11 - 0:12                                       "]"
-0:12 - 0:13                         "]"
-0:13 - 0:19                   ere_expression
-0:13 - 0:19                     one_char_or_coll_elem_ere
-0:13 - 0:19                       bracket_expression
-0:13 - 0:14                         "["
-0:14 - 0:18                         matching_list
-0:14 - 0:18                           bracket_list
-0:14 - 0:18                             follow_list
-0:14 - 0:18                               expression_term
-0:14 - 0:18                                 single_expression
-0:14 - 0:18                                   equivalence_class
-0:14 - 0:15                                     "["
-0:15 - 0:16                                     "="
-0:16 - 0:16                                     issue: syntax_issue
-0:16 - 0:16                                       undefined_syntax
-0:16 - 0:16                                         missing_bracket_term_payload
-0:16 - 0:17                                     "="
-0:17 - 0:18                                     "]"
-0:18 - 0:19                         "]"
-0:19 - 0:20               closing: delimiter `/`
-0:20 - 0:21         function: function
-0:20 - 0:21           print_function
-0:20 - 0:21             verb: function_verb `p`
-0:21 - 1:0        command_separator
-0:21 - 0:22         `\n`
-
 ==================
-A pending closing marker is excluded from a malformed class name (ERE)
+rejects bracket expression syntax (ERE): "s/[[:al pha:"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 s/[[:al pha:
 ------------------
-
-0:0  - 0:12   script
-0:0  - 0:12     command_list
-0:0  - 0:12       editing_command
-0:0  - 0:12         function: function
-0:0  - 0:12           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:12             expression: extended_reg_exp
-0:2  - 0:12               ere_branch
-0:2  - 0:12                 ere_expression
-0:2  - 0:12                   one_char_or_coll_elem_ere
-0:2  - 0:12                     bracket_expression
-0:2  - 0:3                        "["
-0:3  - 0:12                       matching_list
-0:3  - 0:12                         bracket_list
-0:3  - 0:12                           follow_list
-0:3  - 0:12                             expression_term
-0:3  - 0:12                               single_expression
-0:3  - 0:12                                 character_class
-0:3  - 0:4                                    "["
-0:4  - 0:5                                    ":"
-0:5  - 0:7                                    name: class_name `al`
-0:7  - 0:8                                    issue: syntax_issue
-0:7  - 0:8                                      undefined_syntax
-0:7  - 0:8                                        invalid_character_class_name ` `
-0:8  - 0:11                                   name: class_name `pha`
-0:11 - 0:12                                   ":"
-0:12 - 0:12                                   issue: syntax_issue
-0:12 - 0:12                                     incomplete_syntax
-0:12 - 0:12                                       missing_bracket_term_close
-0:12 - 0:12                       issue: syntax_issue
-0:12 - 0:12                         incomplete_syntax
-0:12 - 0:12                           unclosed_bracket_expression
-0:12 - 0:12             issue: syntax_issue
-0:12 - 0:12               incomplete_syntax
-0:12 - 0:12                 unterminated_regular_expression
 
 ==================
 The class name alnum remains one syntactic payload (ERE)
@@ -2896,438 +1803,76 @@ s/[[:Custom9:]]/x/
 0:18 - 0:19         `\n`
 
 ==================
-Invalid equivalence class elements retain their meta-character leaf (BRE)
+rejects bracket expression syntax (BRE): "/[[=-=]][[=]=]]/p\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[[=-=]][[=]=]]/p
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:17       editing_command
-0:0  - 0:16         addresses: address_clause
-0:0  - 0:16           first: address
-0:0  - 0:16             context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:15               expression: basic_reg_exp
-0:1  - 0:15                 bre_branch
-0:1  - 0:8                    bre_expression
-0:1  - 0:8                      simple_bre
-0:1  - 0:8                        nondupl_bre
-0:1  - 0:8                          one_char_or_coll_elem_bre
-0:1  - 0:8                            bracket_expression
-0:1  - 0:2                              "["
-0:2  - 0:7                              matching_list
-0:2  - 0:7                                bracket_list
-0:2  - 0:7                                  follow_list
-0:2  - 0:7                                    expression_term
-0:2  - 0:7                                      single_expression
-0:2  - 0:7                                        equivalence_class
-0:2  - 0:3                                          "["
-0:3  - 0:4                                          "="
-0:4  - 0:5                                          issue: syntax_issue
-0:4  - 0:5                                            undefined_syntax
-0:4  - 0:5                                              invalid_equivalence_class_element
-0:4  - 0:5                                                meta_character `-`
-0:5  - 0:6                                          "="
-0:6  - 0:7                                          "]"
-0:7  - 0:8                              "]"
-0:8  - 0:15                   bre_expression
-0:8  - 0:15                     simple_bre
-0:8  - 0:15                       nondupl_bre
-0:8  - 0:15                         one_char_or_coll_elem_bre
-0:8  - 0:15                           bracket_expression
-0:8  - 0:9                              "["
-0:9  - 0:14                             matching_list
-0:9  - 0:14                               bracket_list
-0:9  - 0:14                                 follow_list
-0:9  - 0:14                                   expression_term
-0:9  - 0:14                                     single_expression
-0:9  - 0:14                                       equivalence_class
-0:9  - 0:10                                         "["
-0:10 - 0:11                                         "="
-0:11 - 0:12                                         issue: syntax_issue
-0:11 - 0:12                                           undefined_syntax
-0:11 - 0:12                                             invalid_equivalence_class_element
-0:11 - 0:12                                               meta_character `]`
-0:12 - 0:13                                         "="
-0:13 - 0:14                                         "]"
-0:14 - 0:15                             "]"
-0:15 - 0:16               closing: delimiter `/`
-0:16 - 0:17         function: function
-0:16 - 0:17           print_function
-0:16 - 0:17             verb: function_verb `p`
-0:17 - 1:0        command_separator
-0:17 - 0:18         `\n`
-
 ==================
-A shared range endpoint retains its hyphen source leaf (BRE)
+rejects bracket expression syntax (BRE): "/[a-b-c]/p\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[a-b-c]/p
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:10       editing_command
-0:0  - 0:9          addresses: address_clause
-0:0  - 0:9            first: address
-0:0  - 0:9              context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:8                expression: basic_reg_exp
-0:1  - 0:8                  bre_branch
-0:1  - 0:8                    bre_expression
-0:1  - 0:8                      simple_bre
-0:1  - 0:8                        nondupl_bre
-0:1  - 0:8                          one_char_or_coll_elem_bre
-0:1  - 0:8                            bracket_expression
-0:1  - 0:2                              "["
-0:2  - 0:7                              matching_list
-0:2  - 0:7                                bracket_list
-0:2  - 0:7                                  follow_list
-0:2  - 0:5                                    expression_term
-0:2  - 0:5                                      range_expression
-0:2  - 0:4                                        start_range
-0:2  - 0:3                                          end_range
-0:2  - 0:3                                            collating_element_single `a`
-0:3  - 0:4                                          "-"
-0:4  - 0:5                                        end_range
-0:4  - 0:5                                          collating_element_single `b`
-0:5  - 0:6                                    expression_term
-0:5  - 0:6                                      issue: syntax_issue
-0:5  - 0:6                                        undefined_syntax
-0:5  - 0:6                                          shared_range_endpoint
-0:5  - 0:6                                            "-"
-0:6  - 0:7                                    expression_term
-0:6  - 0:7                                      single_expression
-0:6  - 0:7                                        end_range
-0:6  - 0:7                                          collating_element_single `c`
-0:7  - 0:8                              "]"
-0:8  - 0:9                closing: delimiter `/`
-0:9  - 0:10         function: function
-0:9  - 0:10           print_function
-0:9  - 0:10             verb: function_verb `p`
-0:10 - 1:0        command_separator
-0:10 - 0:11         `\n`
-
 ==================
-Invalid equivalence class elements retain their meta-character leaf (ERE)
+rejects bracket expression syntax (ERE): "/[[=-=]][[=]=]]/p\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[[=-=]][[=]=]]/p
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:17       editing_command
-0:0  - 0:16         addresses: address_clause
-0:0  - 0:16           first: address
-0:0  - 0:16             context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:15               expression: extended_reg_exp
-0:1  - 0:15                 ere_branch
-0:1  - 0:8                    ere_expression
-0:1  - 0:8                      one_char_or_coll_elem_ere
-0:1  - 0:8                        bracket_expression
-0:1  - 0:2                          "["
-0:2  - 0:7                          matching_list
-0:2  - 0:7                            bracket_list
-0:2  - 0:7                              follow_list
-0:2  - 0:7                                expression_term
-0:2  - 0:7                                  single_expression
-0:2  - 0:7                                    equivalence_class
-0:2  - 0:3                                      "["
-0:3  - 0:4                                      "="
-0:4  - 0:5                                      issue: syntax_issue
-0:4  - 0:5                                        undefined_syntax
-0:4  - 0:5                                          invalid_equivalence_class_element
-0:4  - 0:5                                            meta_character `-`
-0:5  - 0:6                                      "="
-0:6  - 0:7                                      "]"
-0:7  - 0:8                          "]"
-0:8  - 0:15                   ere_expression
-0:8  - 0:15                     one_char_or_coll_elem_ere
-0:8  - 0:15                       bracket_expression
-0:8  - 0:9                          "["
-0:9  - 0:14                         matching_list
-0:9  - 0:14                           bracket_list
-0:9  - 0:14                             follow_list
-0:9  - 0:14                               expression_term
-0:9  - 0:14                                 single_expression
-0:9  - 0:14                                   equivalence_class
-0:9  - 0:10                                     "["
-0:10 - 0:11                                     "="
-0:11 - 0:12                                     issue: syntax_issue
-0:11 - 0:12                                       undefined_syntax
-0:11 - 0:12                                         invalid_equivalence_class_element
-0:11 - 0:12                                           meta_character `]`
-0:12 - 0:13                                     "="
-0:13 - 0:14                                     "]"
-0:14 - 0:15                         "]"
-0:15 - 0:16               closing: delimiter `/`
-0:16 - 0:17         function: function
-0:16 - 0:17           print_function
-0:16 - 0:17             verb: function_verb `p`
-0:17 - 1:0        command_separator
-0:17 - 0:18         `\n`
-
 ==================
-A shared range endpoint retains its hyphen source leaf (ERE)
+rejects bracket expression syntax (ERE): "/[a-b-c]/p\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[a-b-c]/p
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:10       editing_command
-0:0  - 0:9          addresses: address_clause
-0:0  - 0:9            first: address
-0:0  - 0:9              context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:8                expression: extended_reg_exp
-0:1  - 0:8                  ere_branch
-0:1  - 0:8                    ere_expression
-0:1  - 0:8                      one_char_or_coll_elem_ere
-0:1  - 0:8                        bracket_expression
-0:1  - 0:2                          "["
-0:2  - 0:7                          matching_list
-0:2  - 0:7                            bracket_list
-0:2  - 0:7                              follow_list
-0:2  - 0:5                                expression_term
-0:2  - 0:5                                  range_expression
-0:2  - 0:4                                    start_range
-0:2  - 0:3                                      end_range
-0:2  - 0:3                                        collating_element_single `a`
-0:3  - 0:4                                      "-"
-0:4  - 0:5                                    end_range
-0:4  - 0:5                                      collating_element_single `b`
-0:5  - 0:6                                expression_term
-0:5  - 0:6                                  issue: syntax_issue
-0:5  - 0:6                                    undefined_syntax
-0:5  - 0:6                                      shared_range_endpoint
-0:5  - 0:6                                        "-"
-0:6  - 0:7                                expression_term
-0:6  - 0:7                                  single_expression
-0:6  - 0:7                                    end_range
-0:6  - 0:7                                      collating_element_single `c`
-0:7  - 0:8                          "]"
-0:8  - 0:9                closing: delimiter `/`
-0:9  - 0:10         function: function
-0:9  - 0:10           print_function
-0:9  - 0:10             verb: function_verb `p`
-0:10 - 1:0        command_separator
-0:10 - 0:11         `\n`
-
 ==================
-A regex issue owns its character class start structure (BRE)
+rejects bracket expression syntax (BRE): "s/[[:alpha:]-z]/x/\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 s/[[:alpha:]-z]/x/
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:18       editing_command
-0:0  - 0:18         function: function
-0:0  - 0:18           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:15             expression: basic_reg_exp
-0:2  - 0:15               bre_branch
-0:2  - 0:15                 bre_expression
-0:2  - 0:15                   simple_bre
-0:2  - 0:15                     nondupl_bre
-0:2  - 0:15                       one_char_or_coll_elem_bre
-0:2  - 0:15                         bracket_expression
-0:2  - 0:3                            "["
-0:3  - 0:14                           matching_list
-0:3  - 0:14                             bracket_list
-0:3  - 0:14                               follow_list
-0:3  - 0:14                                 expression_term
-0:3  - 0:14                                   range_expression
-0:3  - 0:13                                     start_range
-0:3  - 0:12                                       issue: syntax_issue
-0:3  - 0:12                                         undefined_syntax
-0:3  - 0:12                                           character_class_range_start
-0:3  - 0:12                                             character_class
-0:3  - 0:4                                                "["
-0:4  - 0:5                                                ":"
-0:5  - 0:10                                               name: class_name `alpha`
-0:10 - 0:11                                               ":"
-0:11 - 0:12                                               "]"
-0:12 - 0:13                                       "-"
-0:13 - 0:14                                     end_range
-0:13 - 0:14                                       collating_element_single `z`
-0:14 - 0:15                           "]"
-0:15 - 0:16             middle: delimiter `/`
-0:16 - 0:17             replacement: replacement
-0:16 - 0:17               replacement_literal `x`
-0:17 - 0:18             closing: delimiter `/`
-0:18 - 1:0        command_separator
-0:18 - 0:19         `\n`
-
 ==================
-A regex issue owns its character class end structure (BRE)
+rejects bracket expression syntax (BRE): "s/[a-[:alpha:]]/x/\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 s/[a-[:alpha:]]/x/
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:18       editing_command
-0:0  - 0:18         function: function
-0:0  - 0:18           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:15             expression: basic_reg_exp
-0:2  - 0:15               bre_branch
-0:2  - 0:15                 bre_expression
-0:2  - 0:15                   simple_bre
-0:2  - 0:15                     nondupl_bre
-0:2  - 0:15                       one_char_or_coll_elem_bre
-0:2  - 0:15                         bracket_expression
-0:2  - 0:3                            "["
-0:3  - 0:14                           matching_list
-0:3  - 0:14                             bracket_list
-0:3  - 0:14                               follow_list
-0:3  - 0:14                                 expression_term
-0:3  - 0:14                                   range_expression
-0:3  - 0:5                                      start_range
-0:3  - 0:4                                        end_range
-0:3  - 0:4                                          collating_element_single `a`
-0:4  - 0:5                                        "-"
-0:5  - 0:14                                     end_range
-0:5  - 0:14                                       issue: syntax_issue
-0:5  - 0:14                                         undefined_syntax
-0:5  - 0:14                                           character_class_range_end
-0:5  - 0:14                                             character_class
-0:5  - 0:6                                                "["
-0:6  - 0:7                                                ":"
-0:7  - 0:12                                               name: class_name `alpha`
-0:12 - 0:13                                               ":"
-0:13 - 0:14                                               "]"
-0:14 - 0:15                           "]"
-0:15 - 0:16             middle: delimiter `/`
-0:16 - 0:17             replacement: replacement
-0:16 - 0:17               replacement_literal `x`
-0:17 - 0:18             closing: delimiter `/`
-0:18 - 1:0        command_separator
-0:18 - 0:19         `\n`
-
 ==================
-A regex issue owns its equivalence class start structure (BRE)
+rejects bracket expression syntax (BRE): "s/[[=a=]-z]/x/\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 s/[[=a=]-z]/x/
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:14       editing_command
-0:0  - 0:14         function: function
-0:0  - 0:14           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:11             expression: basic_reg_exp
-0:2  - 0:11               bre_branch
-0:2  - 0:11                 bre_expression
-0:2  - 0:11                   simple_bre
-0:2  - 0:11                     nondupl_bre
-0:2  - 0:11                       one_char_or_coll_elem_bre
-0:2  - 0:11                         bracket_expression
-0:2  - 0:3                            "["
-0:3  - 0:10                           matching_list
-0:3  - 0:10                             bracket_list
-0:3  - 0:10                               follow_list
-0:3  - 0:10                                 expression_term
-0:3  - 0:10                                   range_expression
-0:3  - 0:9                                      start_range
-0:3  - 0:8                                        issue: syntax_issue
-0:3  - 0:8                                          unspecified_syntax
-0:3  - 0:8                                            equivalence_class_range_start
-0:3  - 0:8                                              equivalence_class
-0:3  - 0:4                                                "["
-0:4  - 0:5                                                "="
-0:5  - 0:6                                                element: collating_element_single `a`
-0:6  - 0:7                                                "="
-0:7  - 0:8                                                "]"
-0:8  - 0:9                                        "-"
-0:9  - 0:10                                     end_range
-0:9  - 0:10                                       collating_element_single `z`
-0:10 - 0:11                           "]"
-0:11 - 0:12             middle: delimiter `/`
-0:12 - 0:13             replacement: replacement
-0:12 - 0:13               replacement_literal `x`
-0:13 - 0:14             closing: delimiter `/`
-0:14 - 1:0        command_separator
-0:14 - 0:15         `\n`
-
 ==================
-A regex issue owns its equivalence class end structure (BRE)
+rejects bracket expression syntax (BRE): "s/[a-[=b=]]/x/\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 s/[a-[=b=]]/x/
 
 ------------------
-
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:14       editing_command
-0:0  - 0:14         function: function
-0:0  - 0:14           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:11             expression: basic_reg_exp
-0:2  - 0:11               bre_branch
-0:2  - 0:11                 bre_expression
-0:2  - 0:11                   simple_bre
-0:2  - 0:11                     nondupl_bre
-0:2  - 0:11                       one_char_or_coll_elem_bre
-0:2  - 0:11                         bracket_expression
-0:2  - 0:3                            "["
-0:3  - 0:10                           matching_list
-0:3  - 0:10                             bracket_list
-0:3  - 0:10                               follow_list
-0:3  - 0:10                                 expression_term
-0:3  - 0:10                                   range_expression
-0:3  - 0:5                                      start_range
-0:3  - 0:4                                        end_range
-0:3  - 0:4                                          collating_element_single `a`
-0:4  - 0:5                                        "-"
-0:5  - 0:10                                     end_range
-0:5  - 0:10                                       issue: syntax_issue
-0:5  - 0:10                                         unspecified_syntax
-0:5  - 0:10                                           equivalence_class_range_end
-0:5  - 0:10                                             equivalence_class
-0:5  - 0:6                                                "["
-0:6  - 0:7                                                "="
-0:7  - 0:8                                                element: collating_element_single `b`
-0:8  - 0:9                                                "="
-0:9  - 0:10                                               "]"
-0:10 - 0:11                           "]"
-0:11 - 0:12             middle: delimiter `/`
-0:12 - 0:13             replacement: replacement
-0:12 - 0:13               replacement_literal `x`
-0:13 - 0:14             closing: delimiter `/`
-0:14 - 1:0        command_separator
-0:14 - 0:15         `\n`
 
 ==================
 Dot-delimited outer brackets retain an ordinary list (BRE)
@@ -3377,256 +1922,49 @@ s/[.a.]/x/
 0:10 - 0:11         `\n`
 
 ==================
-An ordinary dot-delimited list retains its nonportable range issue (BRE)
+rejects bracket expression syntax (BRE): "s/[.[=a=]-z.]/x/\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 s/[.[=a=]-z.]/x/
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:16       editing_command
-0:0  - 0:16         function: function
-0:0  - 0:16           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:13             expression: basic_reg_exp
-0:2  - 0:13               bre_branch
-0:2  - 0:13                 bre_expression
-0:2  - 0:13                   simple_bre
-0:2  - 0:13                     nondupl_bre
-0:2  - 0:13                       one_char_or_coll_elem_bre
-0:2  - 0:13                         bracket_expression
-0:2  - 0:3                            "["
-0:3  - 0:12                           matching_list
-0:3  - 0:12                             bracket_list
-0:3  - 0:12                               follow_list
-0:3  - 0:4                                  expression_term
-0:3  - 0:4                                    single_expression
-0:3  - 0:4                                      end_range
-0:3  - 0:4                                        collating_element_single `.`
-0:4  - 0:11                                 expression_term
-0:4  - 0:11                                   range_expression
-0:4  - 0:10                                     start_range
-0:4  - 0:9                                        issue: syntax_issue
-0:4  - 0:9                                          unspecified_syntax
-0:4  - 0:9                                            equivalence_class_range_start
-0:4  - 0:9                                              equivalence_class
-0:4  - 0:5                                                "["
-0:5  - 0:6                                                "="
-0:6  - 0:7                                                element: collating_element_single `a`
-0:7  - 0:8                                                "="
-0:8  - 0:9                                                "]"
-0:9  - 0:10                                       "-"
-0:10 - 0:11                                     end_range
-0:10 - 0:11                                       collating_element_single `z`
-0:11 - 0:12                                 expression_term
-0:11 - 0:12                                   single_expression
-0:11 - 0:12                                     end_range
-0:11 - 0:12                                       collating_element_single `.`
-0:12 - 0:13                           "]"
-0:13 - 0:14             middle: delimiter `/`
-0:14 - 0:15             replacement: replacement
-0:14 - 0:15               replacement_literal `x`
-0:15 - 0:16             closing: delimiter `/`
-0:16 - 1:0        command_separator
-0:16 - 0:17         `\n`
-
 ==================
-A regex issue owns its character class start structure (ERE)
+rejects bracket expression syntax (ERE): "s/[[:alpha:]-z]/x/\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 s/[[:alpha:]-z]/x/
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:18       editing_command
-0:0  - 0:18         function: function
-0:0  - 0:18           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:15             expression: extended_reg_exp
-0:2  - 0:15               ere_branch
-0:2  - 0:15                 ere_expression
-0:2  - 0:15                   one_char_or_coll_elem_ere
-0:2  - 0:15                     bracket_expression
-0:2  - 0:3                        "["
-0:3  - 0:14                       matching_list
-0:3  - 0:14                         bracket_list
-0:3  - 0:14                           follow_list
-0:3  - 0:14                             expression_term
-0:3  - 0:14                               range_expression
-0:3  - 0:13                                 start_range
-0:3  - 0:12                                   issue: syntax_issue
-0:3  - 0:12                                     undefined_syntax
-0:3  - 0:12                                       character_class_range_start
-0:3  - 0:12                                         character_class
-0:3  - 0:4                                            "["
-0:4  - 0:5                                            ":"
-0:5  - 0:10                                           name: class_name `alpha`
-0:10 - 0:11                                           ":"
-0:11 - 0:12                                           "]"
-0:12 - 0:13                                   "-"
-0:13 - 0:14                                 end_range
-0:13 - 0:14                                   collating_element_single `z`
-0:14 - 0:15                       "]"
-0:15 - 0:16             middle: delimiter `/`
-0:16 - 0:17             replacement: replacement
-0:16 - 0:17               replacement_literal `x`
-0:17 - 0:18             closing: delimiter `/`
-0:18 - 1:0        command_separator
-0:18 - 0:19         `\n`
-
 ==================
-A regex issue owns its character class end structure (ERE)
+rejects bracket expression syntax (ERE): "s/[a-[:alpha:]]/x/\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 s/[a-[:alpha:]]/x/
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:18       editing_command
-0:0  - 0:18         function: function
-0:0  - 0:18           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:15             expression: extended_reg_exp
-0:2  - 0:15               ere_branch
-0:2  - 0:15                 ere_expression
-0:2  - 0:15                   one_char_or_coll_elem_ere
-0:2  - 0:15                     bracket_expression
-0:2  - 0:3                        "["
-0:3  - 0:14                       matching_list
-0:3  - 0:14                         bracket_list
-0:3  - 0:14                           follow_list
-0:3  - 0:14                             expression_term
-0:3  - 0:14                               range_expression
-0:3  - 0:5                                  start_range
-0:3  - 0:4                                    end_range
-0:3  - 0:4                                      collating_element_single `a`
-0:4  - 0:5                                    "-"
-0:5  - 0:14                                 end_range
-0:5  - 0:14                                   issue: syntax_issue
-0:5  - 0:14                                     undefined_syntax
-0:5  - 0:14                                       character_class_range_end
-0:5  - 0:14                                         character_class
-0:5  - 0:6                                            "["
-0:6  - 0:7                                            ":"
-0:7  - 0:12                                           name: class_name `alpha`
-0:12 - 0:13                                           ":"
-0:13 - 0:14                                           "]"
-0:14 - 0:15                       "]"
-0:15 - 0:16             middle: delimiter `/`
-0:16 - 0:17             replacement: replacement
-0:16 - 0:17               replacement_literal `x`
-0:17 - 0:18             closing: delimiter `/`
-0:18 - 1:0        command_separator
-0:18 - 0:19         `\n`
-
 ==================
-A regex issue owns its equivalence class start structure (ERE)
+rejects bracket expression syntax (ERE): "s/[[=a=]-z]/x/\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 s/[[=a=]-z]/x/
 
 ------------------
 
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:14       editing_command
-0:0  - 0:14         function: function
-0:0  - 0:14           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:11             expression: extended_reg_exp
-0:2  - 0:11               ere_branch
-0:2  - 0:11                 ere_expression
-0:2  - 0:11                   one_char_or_coll_elem_ere
-0:2  - 0:11                     bracket_expression
-0:2  - 0:3                        "["
-0:3  - 0:10                       matching_list
-0:3  - 0:10                         bracket_list
-0:3  - 0:10                           follow_list
-0:3  - 0:10                             expression_term
-0:3  - 0:10                               range_expression
-0:3  - 0:9                                  start_range
-0:3  - 0:8                                    issue: syntax_issue
-0:3  - 0:8                                      unspecified_syntax
-0:3  - 0:8                                        equivalence_class_range_start
-0:3  - 0:8                                          equivalence_class
-0:3  - 0:4                                            "["
-0:4  - 0:5                                            "="
-0:5  - 0:6                                            element: collating_element_single `a`
-0:6  - 0:7                                            "="
-0:7  - 0:8                                            "]"
-0:8  - 0:9                                    "-"
-0:9  - 0:10                                 end_range
-0:9  - 0:10                                   collating_element_single `z`
-0:10 - 0:11                       "]"
-0:11 - 0:12             middle: delimiter `/`
-0:12 - 0:13             replacement: replacement
-0:12 - 0:13               replacement_literal `x`
-0:13 - 0:14             closing: delimiter `/`
-0:14 - 1:0        command_separator
-0:14 - 0:15         `\n`
-
 ==================
-A regex issue owns its equivalence class end structure (ERE)
+rejects bracket expression syntax (ERE): "s/[a-[=b=]]/x/\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 s/[a-[=b=]]/x/
 
 ------------------
-
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:14       editing_command
-0:0  - 0:14         function: function
-0:0  - 0:14           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:11             expression: extended_reg_exp
-0:2  - 0:11               ere_branch
-0:2  - 0:11                 ere_expression
-0:2  - 0:11                   one_char_or_coll_elem_ere
-0:2  - 0:11                     bracket_expression
-0:2  - 0:3                        "["
-0:3  - 0:10                       matching_list
-0:3  - 0:10                         bracket_list
-0:3  - 0:10                           follow_list
-0:3  - 0:10                             expression_term
-0:3  - 0:10                               range_expression
-0:3  - 0:5                                  start_range
-0:3  - 0:4                                    end_range
-0:3  - 0:4                                      collating_element_single `a`
-0:4  - 0:5                                    "-"
-0:5  - 0:10                                 end_range
-0:5  - 0:10                                   issue: syntax_issue
-0:5  - 0:10                                     unspecified_syntax
-0:5  - 0:10                                       equivalence_class_range_end
-0:5  - 0:10                                         equivalence_class
-0:5  - 0:6                                            "["
-0:6  - 0:7                                            "="
-0:7  - 0:8                                            element: collating_element_single `b`
-0:8  - 0:9                                            "="
-0:9  - 0:10                                           "]"
-0:10 - 0:11                       "]"
-0:11 - 0:12             middle: delimiter `/`
-0:12 - 0:13             replacement: replacement
-0:12 - 0:13               replacement_literal `x`
-0:13 - 0:14             closing: delimiter `/`
-0:14 - 1:0        command_separator
-0:14 - 0:15         `\n`
 
 ==================
 Dot-delimited outer brackets retain an ordinary list (ERE)
@@ -3674,60 +2012,13 @@ s/[.a.]/x/
 0:10 - 0:11         `\n`
 
 ==================
-An ordinary dot-delimited list retains its nonportable range issue (ERE)
+rejects bracket expression syntax (ERE): "s/[.[=a=]-z.]/x/\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 s/[.[=a=]-z.]/x/
 
 ------------------
-
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:16       editing_command
-0:0  - 0:16         function: function
-0:0  - 0:16           substitute_function
-0:0  - 0:1              verb: function_verb `s`
-0:1  - 0:2              opening: delimiter `/`
-0:2  - 0:13             expression: extended_reg_exp
-0:2  - 0:13               ere_branch
-0:2  - 0:13                 ere_expression
-0:2  - 0:13                   one_char_or_coll_elem_ere
-0:2  - 0:13                     bracket_expression
-0:2  - 0:3                        "["
-0:3  - 0:12                       matching_list
-0:3  - 0:12                         bracket_list
-0:3  - 0:12                           follow_list
-0:3  - 0:4                              expression_term
-0:3  - 0:4                                single_expression
-0:3  - 0:4                                  end_range
-0:3  - 0:4                                    collating_element_single `.`
-0:4  - 0:11                             expression_term
-0:4  - 0:11                               range_expression
-0:4  - 0:10                                 start_range
-0:4  - 0:9                                    issue: syntax_issue
-0:4  - 0:9                                      unspecified_syntax
-0:4  - 0:9                                        equivalence_class_range_start
-0:4  - 0:9                                          equivalence_class
-0:4  - 0:5                                            "["
-0:5  - 0:6                                            "="
-0:6  - 0:7                                            element: collating_element_single `a`
-0:7  - 0:8                                            "="
-0:8  - 0:9                                            "]"
-0:9  - 0:10                                   "-"
-0:10 - 0:11                                 end_range
-0:10 - 0:11                                   collating_element_single `z`
-0:11 - 0:12                             expression_term
-0:11 - 0:12                               single_expression
-0:11 - 0:12                                 end_range
-0:11 - 0:12                                   collating_element_single `.`
-0:12 - 0:13                       "]"
-0:13 - 0:14             middle: delimiter `/`
-0:14 - 0:15             replacement: replacement
-0:14 - 0:15               replacement_literal `x`
-0:15 - 0:16             closing: delimiter `/`
-0:16 - 1:0        command_separator
-0:16 - 0:17         `\n`
 
 ==================
 A complete class name retains its delimiter structure (BRE)
@@ -3820,52 +2111,13 @@ A bracket element after a complete character class is independent (BRE)
 0:15 - 0:16         `\n`
 
 ==================
-A missing class close retains separated name fragments (BRE)
+rejects bracket expression syntax (BRE): "/[[:alpha:x]/p\n"
 :language(posix_sed)
-:cst
+:error
 ==================
 /[[:alpha:x]/p
 
 ------------------
-
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:14       editing_command
-0:0  - 0:13         addresses: address_clause
-0:0  - 0:13           first: address
-0:0  - 0:13             context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:12               expression: basic_reg_exp
-0:1  - 0:12                 bre_branch
-0:1  - 0:12                   bre_expression
-0:1  - 0:12                     simple_bre
-0:1  - 0:12                       nondupl_bre
-0:1  - 0:12                         one_char_or_coll_elem_bre
-0:1  - 0:12                           bracket_expression
-0:1  - 0:2                              "["
-0:2  - 0:11                             matching_list
-0:2  - 0:11                               bracket_list
-0:2  - 0:11                                 follow_list
-0:2  - 0:11                                   expression_term
-0:2  - 0:11                                     single_expression
-0:2  - 0:11                                       character_class
-0:2  - 0:3                                          "["
-0:3  - 0:4                                          ":"
-0:4  - 0:9                                          name: class_name `alpha`
-0:9  - 0:10                                         issue: syntax_issue
-0:9  - 0:10                                           undefined_syntax
-0:9  - 0:10                                             invalid_character_class_name `:`
-0:10 - 0:11                                         name: class_name `x`
-0:11 - 0:11                                         issue: syntax_issue
-0:11 - 0:11                                           undefined_syntax
-0:11 - 0:11                                             missing_bracket_term_close
-0:11 - 0:12                             "]"
-0:12 - 0:13               closing: delimiter `/`
-0:13 - 0:14         function: function
-0:13 - 0:14           print_function
-0:13 - 0:14             verb: function_verb `p`
-0:14 - 1:0        command_separator
-0:14 - 0:15         `\n`
 
 ==================
 A complete class name retains its delimiter structure (ERE)
@@ -3954,50 +2206,13 @@ A bracket element after a complete character class is independent (ERE)
 0:15 - 0:16         `\n`
 
 ==================
-A missing class close retains separated name fragments (ERE)
+rejects bracket expression syntax (ERE): "/[[:alpha:x]/p\n"
 :language(posix_sed_ere)
-:cst
+:error
 ==================
 /[[:alpha:x]/p
 
 ------------------
-
-0:0  - 1:0    script
-0:0  - 1:0      command_list
-0:0  - 0:14       editing_command
-0:0  - 0:13         addresses: address_clause
-0:0  - 0:13           first: address
-0:0  - 0:13             context_address
-0:0  - 0:1                opening: delimiter `/`
-0:1  - 0:12               expression: extended_reg_exp
-0:1  - 0:12                 ere_branch
-0:1  - 0:12                   ere_expression
-0:1  - 0:12                     one_char_or_coll_elem_ere
-0:1  - 0:12                       bracket_expression
-0:1  - 0:2                          "["
-0:2  - 0:11                         matching_list
-0:2  - 0:11                           bracket_list
-0:2  - 0:11                             follow_list
-0:2  - 0:11                               expression_term
-0:2  - 0:11                                 single_expression
-0:2  - 0:11                                   character_class
-0:2  - 0:3                                      "["
-0:3  - 0:4                                      ":"
-0:4  - 0:9                                      name: class_name `alpha`
-0:9  - 0:10                                     issue: syntax_issue
-0:9  - 0:10                                       undefined_syntax
-0:9  - 0:10                                         invalid_character_class_name `:`
-0:10 - 0:11                                     name: class_name `x`
-0:11 - 0:11                                     issue: syntax_issue
-0:11 - 0:11                                       undefined_syntax
-0:11 - 0:11                                         missing_bracket_term_close
-0:11 - 0:12                         "]"
-0:12 - 0:13               closing: delimiter `/`
-0:13 - 0:14         function: function
-0:13 - 0:14           print_function
-0:13 - 0:14             verb: function_verb `p`
-0:14 - 1:0        command_separator
-0:14 - 0:15         `\n`
 
 ==================
 Equal-delimited outer brackets form an ordinary list (BRE)
@@ -4043,7 +2258,7 @@ Equal-delimited outer brackets form an ordinary list (BRE)
     (command_separator)))
 
 ==================
-Colon-delimited outer brackets retain their unresolved classification (BRE)
+accepts a colon-delimited bracket list as ordinary characters (BRE)
 :language(posix_sed)
 ==================
 /[:alpha:]/p
@@ -4063,41 +2278,38 @@ Colon-delimited outer brackets retain their unresolved classification (BRE)
                   (simple_bre
                     (nondupl_bre
                       (one_char_or_coll_elem_bre
-                        (syntax_issue
-                          (unspecified_syntax
-                            (ambiguous_bracket_expression
-                              (bracket_expression
-                                (matching_list
-                                  (bracket_list
-                                    (follow_list
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single))))
-                                      (expression_term
-                                        (single_expression
-                                          (end_range
-                                            (collating_element_single)))))))))))))))))
+                        (bracket_expression
+                          (matching_list
+                            (bracket_list
+                              (follow_list
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))
+                                (expression_term
+                                  (single_expression
+                                    (end_range
+                                      (collating_element_single))))))))))))))
             (delimiter))))
       (function
         (print_function
@@ -4146,7 +2358,7 @@ Equal-delimited outer brackets form an ordinary list (ERE)
     (command_separator)))
 
 ==================
-Colon-delimited outer brackets retain their unresolved classification (ERE)
+accepts a colon-delimited bracket list as ordinary characters (ERE)
 :language(posix_sed_ere)
 ==================
 /[:alpha:]/p
@@ -4164,41 +2376,38 @@ Colon-delimited outer brackets retain their unresolved classification (ERE)
               (ere_branch
                 (ere_expression
                   (one_char_or_coll_elem_ere
-                    (syntax_issue
-                      (unspecified_syntax
-                        (ambiguous_bracket_expression
-                          (bracket_expression
-                            (matching_list
-                              (bracket_list
-                                (follow_list
-                                  (expression_term
-                                    (single_expression
-                                      (end_range
-                                        (collating_element_single))))
-                                  (expression_term
-                                    (single_expression
-                                      (end_range
-                                        (collating_element_single))))
-                                  (expression_term
-                                    (single_expression
-                                      (end_range
-                                        (collating_element_single))))
-                                  (expression_term
-                                    (single_expression
-                                      (end_range
-                                        (collating_element_single))))
-                                  (expression_term
-                                    (single_expression
-                                      (end_range
-                                        (collating_element_single))))
-                                  (expression_term
-                                    (single_expression
-                                      (end_range
-                                        (collating_element_single))))
-                                  (expression_term
-                                    (single_expression
-                                      (end_range
-                                        (collating_element_single)))))))))))))))
+                    (bracket_expression
+                      (matching_list
+                        (bracket_list
+                          (follow_list
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))
+                            (expression_term
+                              (single_expression
+                                (end_range
+                                  (collating_element_single))))))))))))
             (delimiter))))
       (function
         (print_function

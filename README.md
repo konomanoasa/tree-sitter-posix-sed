@@ -35,7 +35,3 @@ npm test
 ## License
 
 [MIT](LICENSE)
-
-## Used By
-
-[sed-ts-mode](https://github.com/konomanoasa/sed-ts-mode)

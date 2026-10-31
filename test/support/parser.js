@@ -4,21 +4,14 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { after, before } from "node:test";
 import { createTreeSitter } from "../../scripts/tree-sitter.js";
-import {
-  issueSignatures,
-  parseCst,
-  publicNodes,
-  sourceEndPoint,
-} from "./cst.js";
+import { parseCst, sourceEndPoint } from "./cst.js";
 
-const parserTimeoutMs = 60_000;
-const parserOutputLimitBytes = 16 * 1024 * 1024;
+const commandTimeoutMs = 60_000;
+const cstOutputLimitBytes = 16 * 1024 * 1024;
 const summaryTimeoutMicros = 10_000_000;
 
 let temporaryDirectory;
-
 let treeSitter;
-
 let fixtureNumber = 0;
 
 before(() => {
@@ -74,7 +67,7 @@ function formatEdit({ byte, deleteBytes, insert }) {
   return `${byte} ${deleteBytes} ${insert}`;
 }
 
-function parse(scope, source, edits = []) {
+function parseInput(scope, source, edits = []) {
   const sourcePath = join(temporaryDirectory, `fixture-${fixtureNumber}.sed`);
   fixtureNumber += 1;
   writeFileSync(sourcePath, source);
@@ -86,13 +79,15 @@ function parse(scope, source, edits = []) {
       "--scope",
       scope,
       "--cst",
+      "--time",
       sourcePath,
+      ...(edits.length === 0 ? [sourcePath] : []),
       ...(edits.length === 0 ? [] : ["--edits", ...edits.map(formatEdit)]),
     ],
     {
       encoding: "utf8",
-      maxBuffer: parserOutputLimitBytes,
-      timeout: parserTimeoutMs,
+      maxBuffer: cstOutputLimitBytes,
+      timeout: commandTimeoutMs,
     },
   );
   if (result.error) {
@@ -102,36 +97,131 @@ function parse(scope, source, edits = []) {
     result.status === 0 || result.status === 1,
     result.stdout + result.stderr,
   );
-  result.nodes = parseCst(result.stdout, applyEdits(source, edits));
+  const trees = [];
+  let lines = [];
+  for (const line of result.stdout.split("\n")) {
+    if (
+      line.startsWith(sourcePath) &&
+      /^[ \t]+Parse:[ \t]/.test(line.slice(sourcePath.length))
+    ) {
+      trees.push(lines.join("\n"));
+      lines = [];
+    } else if (!/^[ \t]*Edit:[ \t]/.test(line)) lines.push(line);
+  }
+  assert.equal(
+    trees.length,
+    edits.length === 0 ? 2 : 1,
+    result.stdout + result.stderr,
+  );
+  if (edits.length === 0)
+    assert.equal(trees[1], trees[0], "repeated fresh parses must match");
+  result.nodes = parseCst(trees[0], applyEdits(source, edits));
+  // CLI exit status misses hidden MISSING tokens; the root marker includes them.
+  result.hasError = /^[0-9: \t-]+•/.test(trees[0]);
+  return result;
+}
+
+function parse(scope, source, edits = []) {
+  let initial = Buffer.from(source);
+  let current = initial;
+  let history = [];
+  let result = parseInput(scope, initial);
+  const bom = Buffer.from("\uFEFF");
+  for (const edit of edits) {
+    const hadBom = current.subarray(0, bom.length).equals(bom);
+    current = applyEdits(current, [edit]);
+    const movedBom = !hadBom && current.subarray(0, bom.length).equals(bom);
+    if (movedBom) {
+      initial = current;
+      history = [];
+      result = parseInput(scope, current);
+    } else {
+      history.push(edit);
+      result = parseInput(scope, initial, history);
+    }
+  }
   return result;
 }
 
 function parseSuccessfully(scope, source, edits = []) {
   const result = parse(scope, source, edits);
   assert.equal(result.status, 0, result.stdout + result.stderr);
-  assert.doesNotMatch(result.stdout, /^[0-9: \t-]+•/m, result.stdout);
+  assert.equal(result.hasError, false, result.stdout);
   return result;
 }
 
+function relexedTokens(scope, source, edits) {
+  const sourcePath = join(temporaryDirectory, `fixture-${fixtureNumber}.sed`);
+  fixtureNumber += 1;
+  writeFileSync(sourcePath, source);
+  const result = treeSitter.run(
+    [
+      "parse",
+      "--encoding",
+      "utf8",
+      "--scope",
+      scope,
+      "--quiet",
+      "--debug",
+      "normal",
+      sourcePath,
+      "--edits",
+      ...edits.map(formatEdit),
+    ],
+    {
+      encoding: "utf8",
+      maxBuffer: cstOutputLimitBytes,
+      timeout: commandTimeoutMs,
+    },
+  );
+  assert.ifError(result.error);
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  const logs = result.stderr.split("\nparse_after_edit\n");
+  assert.equal(logs.length, 2, "parser logged no reparse");
+  return logs[1]
+    .split("\n")
+    .filter((line) => line.startsWith("lexed_lookahead")).length;
+}
+
 function assertIncrementalContract(fresh, incremental, context) {
-  const freshIssues = issueSignatures(fresh.nodes);
-  assert.deepEqual(
-    issueSignatures(incremental.nodes),
-    freshIssues,
-    `${context}: fresh and incremental issue signatures differ`,
+  assert.equal(
+    fresh.hasError,
+    false,
+    `${context}: expected a normal fresh parse`,
+  );
+  assert.equal(
+    incremental.hasError,
+    false,
+    `${context}: normal source has errors\n${incremental.stdout}`,
   );
   assert.deepEqual(
-    publicNodes(incremental.nodes),
-    publicNodes(fresh.nodes),
-    `${context}: fresh and incremental public CSTs differ`,
+    incremental.nodes,
+    fresh.nodes,
+    `${context}: fresh and incremental CSTs differ`,
   );
-  if (fresh.status === 0 && freshIssues.length === 0) {
-    assert.equal(incremental.status, 0, `${context}: normal source has errors`);
-    assert.deepEqual(
-      incremental.nodes,
-      fresh.nodes,
-      `${context}: fresh and incremental CSTs differ`,
+}
+
+function assertValidHistory(scope, initial, steps) {
+  let source = Buffer.from(initial);
+  const edits = [];
+  for (const { byte, deleteBytes, insert, source: expected, valid } of steps) {
+    const edit = { byte, deleteBytes, insert };
+    source = applyEdits(source, [edit]);
+    assert.equal(
+      source.toString(),
+      expected,
+      "edit must produce the explicit expected input",
     );
+    edits.push(edit);
+    const fresh = parse(scope, source);
+    assert.equal(fresh.hasError, !valid, fresh.stdout);
+    const incremental = parse(scope, initial, edits);
+    if (valid)
+      assertIncrementalContract(
+        fresh,
+        incremental,
+        JSON.stringify({ initial, edits }),
+      );
   }
 }
 
@@ -151,7 +241,7 @@ function parseSummary(scope, source, timeoutMicros = summaryTimeoutMicros) {
       String(timeoutMicros),
       sourcePath,
     ],
-    { encoding: "utf8", timeout: parserTimeoutMs },
+    { encoding: "utf8", timeout: commandTimeoutMs },
   );
   assert.ifError(result.error);
   assert.ok(
@@ -176,58 +266,12 @@ function parseSummary(scope, source, timeoutMicros = summaryTimeoutMicros) {
   return summary;
 }
 
-function lexedTokensAfterEdits(scope, source, edits) {
-  const sourcePath = join(temporaryDirectory, `log-${fixtureNumber++}.sed`);
-  writeFileSync(sourcePath, source);
-  const result = treeSitter.run(
-    [
-      "parse",
-      "--encoding",
-      "utf8",
-      "--scope",
-      scope,
-      "--quiet",
-      "--debug=normal",
-      sourcePath,
-      "--edits",
-      ...edits.map(formatEdit),
-    ],
-    {
-      encoding: "utf8",
-      maxBuffer: parserOutputLimitBytes,
-      timeout: parserTimeoutMs,
-    },
-  );
-  assert.ifError(result.error);
-  assert.ok(result.status === 0 || result.status === 1, result.stderr);
-  const start = result.stderr.lastIndexOf("parse_after_edit\n");
-  assert.notEqual(start, -1, "parser logged no incremental parse");
-  const lexed = result.stderr.slice(start).match(/^lexed_lookahead /gm);
-  assert.ok(lexed, "parser logged no lexed token");
-  return lexed.length;
-}
-
-function parseCstWithin(scope, source, timeoutMs, context) {
-  const sourcePath = join(temporaryDirectory, `cst-${fixtureNumber++}.sed`);
-  writeFileSync(sourcePath, source);
-  const result = treeSitter.run(
-    ["parse", "--encoding", "utf8", "--scope", scope, "--cst", sourcePath],
-    {
-      encoding: "utf8",
-      stdio: ["ignore", "ignore", "pipe"],
-      timeout: timeoutMs,
-    },
-  );
-  assert.equal(result.error, undefined, context);
-  assert.equal(result.status, 0, `${context}\n${result.stderr}`);
-}
-
 export {
   applyEdits,
   assertIncrementalContract,
-  lexedTokensAfterEdits,
+  assertValidHistory,
   parse,
-  parseCstWithin,
   parseSuccessfully,
   parseSummary,
+  relexedTokens,
 };

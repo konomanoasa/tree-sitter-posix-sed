@@ -111,9 +111,6 @@
 (start_range
   "-" @operator)
 
-(shared_range_endpoint
-  "-" @operator)
-
 (range_expression
   "-" @string.regexp)
 
@@ -149,9 +146,6 @@
   ] @operator)
 
 (bre_dupl_symbol
-  "," @punctuation.delimiter)
-
-(unexpected_interval_separator
   "," @punctuation.delimiter)
 
 (ordinary_character) @string.regexp
