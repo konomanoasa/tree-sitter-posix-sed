@@ -2312,7 +2312,6 @@ for (const grammar of grammars) {
           grammar.name === "posix_sed" ? "bre_dupl_symbol" : "ere_dupl_symbol",
         );
       }
-      // Changing the suffix must invalidate scanner decisions that looked ahead.
       const bytes = Buffer.from(fixture.source);
       const withSuffix = Buffer.concat([bytes, Buffer.from("\n")]);
       assertIncrementalContract(

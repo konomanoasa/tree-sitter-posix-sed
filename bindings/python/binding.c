@@ -1,6 +1,6 @@
 #include <Python.h>
 
-#include "tree_sitter/parser.h"
+#include "../../src/tree_sitter/parser.h"
 
 const TSLanguage *tree_sitter_posix_sed(void);
 const TSLanguage *tree_sitter_posix_sed_ere(void);

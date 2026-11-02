@@ -498,7 +498,6 @@ scan_label_piece(TSLexer *lexer, const bool *valid_symbols, TSSymbol *symbol) {
   return consumed && emit_symbol(valid_symbols, LABEL_LITERAL, symbol);
 }
 
-// Blanks before a closing brace or a missing brace at EOF are layout.
 static inline bool
 at_closing_brace(const TSLexer *lexer, const bool *valid_symbols) {
   return lexer->lookahead == '}' ||

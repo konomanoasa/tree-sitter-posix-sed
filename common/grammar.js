@@ -566,7 +566,6 @@ function operandRules(mode) {
         ],
       ),
 
-    // One symbol per repeated element keeps fields in place in resumed parses.
     _escaped_invalid_character: ($) =>
       seq($._escape_prefix, invalidCharacterIssue($, "escaped_nul_character")),
 

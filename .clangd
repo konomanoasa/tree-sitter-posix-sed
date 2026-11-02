@@ -1,11 +1,17 @@
 CompileFlags:
   Add:
-    - -std=c17
-    - -xc
     - -Wall
     - -Wextra
     - -Werror
     - -pedantic
+
+---
+If:
+  PathMatch: .*\.(c|h)
+CompileFlags:
+  Add:
+    - -std=c17
+    - -xc
 
 ---
 If:
@@ -35,8 +41,8 @@ CompileFlags:
 
 ---
 If:
-  PathMatch: bindings/python/.*\.c
+  PathMatch: bindings/node/.*\.cc
 CompileFlags:
-  CompilationDatabase: None
+  CompilationDatabase: build/Release
   Add:
-    - -I../../src
+    - -std=c++17
