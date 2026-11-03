@@ -3,6 +3,7 @@
 [![CI](https://github.com/konomanoasa/tree-sitter-posix-sed/actions/workflows/ci.yaml/badge.svg)](https://github.com/konomanoasa/tree-sitter-posix-sed/actions/workflows/ci.yaml)
 [![crates.io](https://img.shields.io/crates/v/konomanoasa-tree-sitter-posix-sed)](https://crates.io/crates/konomanoasa-tree-sitter-posix-sed)
 [![npm](https://img.shields.io/npm/v/@konomanoasa/tree-sitter-posix-sed)](https://www.npmjs.com/package/@konomanoasa/tree-sitter-posix-sed)
+[![PyPI](https://img.shields.io/pypi/v/konomanoasa-tree-sitter-posix-sed)](https://pypi.org/project/konomanoasa-tree-sitter-posix-sed/)
 
 [Tree-sitter](https://tree-sitter.github.io/tree-sitter/) grammars for
 POSIX.1-2024 sed.
