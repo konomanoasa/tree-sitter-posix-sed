@@ -21,8 +21,7 @@ For POSIX ERE parsing, use `posix_sed_ere`.
 ## Development
 
 ```sh
-npm install
-npm run build
+npm ci
 npm test
 ```
 
