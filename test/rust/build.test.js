@@ -7,6 +7,7 @@ import {
   readFileSync,
   rmSync,
 } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { copyFiles, packageName, root } from "../../scripts/tree-sitter.js";
@@ -52,11 +53,7 @@ test("Rust metadata matches the grammar and license", {
 });
 
 test("npm and Cargo archives contain buildable bindings for every language", () => {
-  const cache = join(root, "node_modules", ".cache");
-  mkdirSync(cache, { recursive: true });
-  const directory = mkdtempSync(
-    join(cache, `${packageName}-rust-distribution-`),
-  );
+  const directory = mkdtempSync(join(tmpdir(), "rust-dist-"));
   try {
     const npm = process.env.npm_execpath;
     assert.ok(npm, "Run Rust build checks through npm exec.");
