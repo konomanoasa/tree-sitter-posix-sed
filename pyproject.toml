@@ -12,11 +12,11 @@ Repository = "https://github.com/konomanoasa/tree-sitter-posix-sed"
 [dependency-groups]
 dev = [
     "poethepoet==0.49.0",
-    "ruff==0.17.3",
+    "ruff==0.17.6",
     "setuptools==84.2.1",
-    "tree-sitter==0.26.0",
+    "tree-sitter==0.27.0",
     "twine==7.0.0",
-    "ty==0.0.96",
+    "ty==0.0.111",
 ]
 
 [build-system]
